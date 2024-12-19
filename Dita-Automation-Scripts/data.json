@@ -1,0 +1,32 @@
+{
+    "sampleApi":{
+        "key":"do",
+        "keyword":"DO",
+        "toc_href":"API/toc_channel.dita",
+        "id":"",
+        "parentclass":"irtcengine",
+        "platforms":["android","ios","windows"],
+        "navtitle":"核心方法",
+        "attributes":"api"
+    },
+    "Api2":{
+        "key":"thisisatest",
+        "keyword":"THISISATEST",
+        "toc_href":"API/toc_channel.dita",
+        "id":"",
+        "parentclass":"itest",
+        "platforms":["android","ios"],
+        "navtitle":"核心方法",
+        "attributes":"class"
+    },
+    "Api3":{
+        "key":"ontestreust",
+        "keyword":"ONTESTRESULT",
+        "toc_href":"API/toc_channel.dita",
+        "id":"",
+        "parentclass":"itestobserver",
+        "platforms":["android","ios","windows"],
+        "navtitle":"RTE 相关",
+        "attributes":"callback"
+    }
+}

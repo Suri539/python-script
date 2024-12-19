@@ -5,32 +5,10 @@
         "toc_href":"API/toc_channel.dita",
         "id":"",
         "parentclass":"IRtcEngine",
-        "platforms":["android","ios","windows","unity"],
+        "platforms":["all"],
         "navtitle":"核心方法",
         "attributes":"api",
         "release_area":"all"
-    },
-    "sampleClass":{
-        "key":"sampleClass",
-        "keyword":"SampleClass",
-        "toc_href":"API/toc_channel.dita",
-        "id":"",
-        "parentclass":"none",
-        "platforms":["all"],
-        "navtitle":"核心方法",
-        "attributes":"class",
-        "release_area":"cn"
-    },
-    "sampleCallback":{
-        "key":"sampleCallback",
-        "keyword":"onSampleCallback",
-        "toc_href":"API/toc_channel.dita",
-        "id":"",
-        "parentclass":"IRtcEngineEventHandler",
-        "platforms":["android","ios","windows"],
-        "navtitle":"RTE 相关",
-        "attributes":"callback",
-        "release_area":"en"
     },
     "sampleEnum":{
         "key":"SAMPLE_ENUM",
@@ -52,16 +30,6 @@
         "platforms":["android","ios","windows"],
         "navtitle":"Interface classes",
         "attributes":"class"
-    },
-    "Api5":{
-        "key":"playertypes",
-        "keyword":"PlayerTypes",
-        "toc_href":"none",
-        "id":"",
-        "parentclass":"none",
-        "platforms":["android","windows"],
-        "navtitle":"Enums",
-        "attributes":"enum"
     }
 }
 

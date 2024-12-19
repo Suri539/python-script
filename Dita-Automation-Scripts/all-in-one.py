@@ -163,7 +163,23 @@ def create_and_insert_keydef(root, api_data):
     # 创建新的 keydef 元素
     new_keydef = etree.Element('keydef')
     new_keydef.set('keys', api_data['key'])
-    new_keydef.set('href', f"../API/{api_data.get('attributes', '')}_{api_data.get('parentclass', '').lower()}_{api_data['key'].lower()}.dita")
+
+    # 获取attributes和parentclass
+    attributes = api_data.get('attributes', '')
+    parentclass = api_data.get('parentclass', '').lower()
+
+    # 根据不同条件构建href
+    if attributes == 'enum':
+        # enum类型的特殊处理，移除keyname中的下划线
+        keyname = api_data['key'].lower().replace('_', '')
+        new_keydef.set('href', f"../API/{attributes}_{keyname}.dita")
+    elif parentclass == 'none':
+        # parentclass为none的处理
+        new_keydef.set('href', f"../API/{attributes}_{api_data['key'].lower()}.dita")
+    else:
+        # 默认处理
+        new_keydef.set('href', f"../API/{attributes}_{parentclass}_{api_data['key'].lower()}.dita")
+
     new_keydef.text = '\n' + base_indent + '    '  # 为第一个子元素添加缩进
     new_keydef.tail = '\n' + base_indent
 

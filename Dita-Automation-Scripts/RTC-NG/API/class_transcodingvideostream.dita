@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
+<reference id="class_transcodingvideostream">
+    <title><ph keyref="TranscodingVideoStream"/></title>
+    <shortdesc id="short"><ph id="shortdesc">参与本地合图的视频流。</ph></shortdesc>
+    <refbody>
+        <section id="prototype">
+            <p outputclass="codeblock">
+            <codeblock props="android" outputclass="language-java">public static class TranscodingVideoStream {
+  public Constants.VideoSourceType sourceType;
+  public int remoteUserUid;
+  public String imageUrl;
+  public int mediaPlayerId;
+  public int x;
+  public int y;
+  public int width;
+  public int height;
+  public int zOrder;
+  public double alpha;
+  public boolean mirror;
+  public TranscodingVideoStream() {
+    this.sourceType = Constants.VideoSourceType.VIDEO_SOURCE_CAMERA_PRIMARY;
+    this.remoteUserUid = 0;
+    this.imageUrl = null;
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.zOrder = 0;
+    this.alpha = 1.0;
+    this.mirror = false;
+  }
+};</codeblock>
+            <codeblock props="hmos" outputclass="language-arkts">export class TranscodingVideoStream {
+  
+  public remoteUserUid:number;
+  
+  public  sourceType:Constants.VideoSourceType;
+  
+  public imageUrl:string;
+  
+  public mediaPlayerId:number;
+  
+  public x:number;
+  
+  public y:number;
+  
+  public width:number;
+  
+  public height:number;
+  
+  public zOrder:number;
+  
+  public alpha:number;
+  
+  public mirror:boolean;
+  public constructor() {
+    this.remoteUserUid = 0;
+    this.sourceType = Constants.VideoSourceType.CAMERA_PRIMARY;
+    this.imageUrl = &quot;&quot;;
+    this.mediaPlayerId = -1;
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.zOrder = 0;
+    this.alpha = 1.0;
+    this.mirror = false;
+  }
+}</codeblock>
+            <codeblock props="ios mac" outputclass="language-objectivec">__attribute__((visibility("default"))) @interface AgoraTranscodingVideoStream: NSObject
+@property (assign, nonatomic) AgoraVideoSourceType sourceType;
+@property (assign, nonatomic) NSUInteger remoteUserUid;
+@property (copy, nonatomic) NSString * _Nullable imageUrl;
+@property(assign, nonatomic) NSUInteger mediaPlayerId;
+@property (assign, nonatomic) CGRect rect;
+@property (assign, nonatomic) NSInteger zOrder;
+@property(assign, nonatomic) double alpha;
+@property(assign, nonatomic) BOOL mirror;
+@end</codeblock>
+            <codeblock props="cpp unreal" outputclass="language-cpp">struct TranscodingVideoStream {
+  VIDEO_SOURCE_TYPE sourceType;
+  uid_t remoteUserUid;
+  const char* imageUrl;
+  int mediaPlayerId;
+  int x;
+  int y;
+  int width;
+  int height;
+  int zOrder;
+  double alpha;
+  bool mirror;
+  TranscodingVideoStream()
+    : sourceType(VIDEO_SOURCE_CAMERA_PRIMARY),
+      remoteUserUid(0),
+      imageUrl(NULL),
+      x(0),
+      y(0),
+      width(0),
+      height(0),
+      zOrder(0),
+      alpha(1.0),
+      mirror(false) {}
+};</codeblock>
+         <codeblock props="bp" outputclass="language-cpp">USTRUCT(BlueprintType)
+struct FTranscodingVideoStream {
+	GENERATED_BODY()
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	EVIDEO_SOURCE_TYPE sourceType = EVIDEO_SOURCE_TYPE::VIDEO_SOURCE_CAMERA_PRIMARY;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int64 remoteUserUid = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	FString imageUrl = &quot;&quot;;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int mediaPlayerId = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int x = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int y = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int width = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int height = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	int zOrder = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	float alpha = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = &quot;Agora|TranscodingVideoStream&quot;)
+	bool mirror = false;
+	FTranscodingVideoStream(){}
+	FTranscodingVideoStream(const agora::rtc::TranscodingVideoStream &amp; AgoraData){
+		sourceType = static_cast&lt;EVIDEO_SOURCE_TYPE&gt;(AgoraData.sourceType);
+		remoteUserUid = AgoraData.remoteUserUid;
+		imageUrl = UTF8_TO_TCHAR(AgoraData.imageUrl);
+		mediaPlayerId = AgoraData.mediaPlayerId;
+		x = AgoraData.x;
+		y = AgoraData.y;
+		width = AgoraData.width;
+		height = AgoraData.height;
+		zOrder = AgoraData.zOrder;
+		alpha = AgoraData.alpha;
+		mirror = AgoraData.mirror;
+	}
+	agora::rtc::TranscodingVideoStream CreateAgoraData() const{
+		
+		agora::rtc::TranscodingVideoStream AgoraData;
+		AgoraData.sourceType = static_cast&lt;agora::rtc::VIDEO_SOURCE_TYPE&gt;(sourceType);
+		AgoraData.remoteUserUid = remoteUserUid;
+		SET_UABT_FSTRING_TO_CONST_CHAR___MEMALLOC(AgoraData.imageUrl,this-&gt;imageUrl)
+		AgoraData.mediaPlayerId = mediaPlayerId;
+		AgoraData.x = x;
+		AgoraData.y = y;
+		AgoraData.width = width;
+		AgoraData.height = height;
+		AgoraData.zOrder = zOrder;
+		AgoraData.alpha = alpha;
+		AgoraData.mirror = mirror;
+		return AgoraData;
+	}
+	void FreeAgoraData(agora::rtc::TranscodingVideoStream &amp; AgoraData) const{
+		SET_UABT_FSTRING_TO_CONST_CHAR___MEMFREE(AgoraData.imageUrl)
+	}
+};</codeblock>
+            <codeblock props="electron" outputclass="language-typescript">export class TranscodingVideoStream {
+
+  sourceType?: VideoSourceType;
+
+  remoteUserUid?: number;
+
+  imageUrl?: string;
+
+  mediaPlayerId?: number;
+
+  x?: number;
+
+  y?: number;
+
+  width?: number;
+
+  height?: number;
+
+  zOrder?: number;
+
+  alpha?: number;
+
+  mirror?: boolean;
+}</codeblock>
+            <codeblock props="unity cs" outputclass="language-csharp">
+    public class TranscodingVideoStream
+    {
+        public VIDEO_SOURCE_TYPE sourceType;
+        public uint remoteUserUid;
+        public string imageUrl;
+        public int mediaPlayerId;
+        public int x;
+        public int y;
+        public int width;
+        public int height;
+        public int zOrder;
+        public double alpha;
+        public bool mirror;
+    };</codeblock>
+            <codeblock props="rn" outputclass="language-typescript">export class TranscodingVideoStream {
+
+  sourceType?: VideoSourceType;
+
+  remoteUserUid?: number;
+
+  imageUrl?: string;
+
+  mediaPlayerId?: number;
+
+  x?: number;
+
+  y?: number;
+
+  width?: number;
+
+  height?: number;
+
+  zOrder?: number;
+
+  alpha?: number;
+
+  mirror?: boolean;
+}</codeblock>
+            <codeblock props="flutter" outputclass="language-dart">@JsonSerializable(explicitToJson: true, includeIfNull: false)
+class TranscodingVideoStream {
+  const TranscodingVideoStream(
+      {this.sourceType,
+      this.remoteUserUid,
+      this.imageUrl,
+      this.mediaPlayerId,
+      this.x,
+      this.y,
+      this.width,
+      this.height,
+      this.zOrder,
+      this.alpha,
+      this.mirror});
+
+  @JsonKey(name: 'sourceType')
+  final VideoSourceType? sourceType;
+
+  @JsonKey(name: 'remoteUserUid')
+  final int? remoteUserUid;
+
+  @JsonKey(name: 'imageUrl')
+  final String? imageUrl;
+
+  @JsonKey(name: 'mediaPlayerId')
+  final int? mediaPlayerId;
+
+  @JsonKey(name: 'x')
+  final int? x;
+
+  @JsonKey(name: 'y')
+  final int? y;
+
+  @JsonKey(name: 'width')
+  final int? width;
+
+  @JsonKey(name: 'height')
+  final int? height;
+
+  @JsonKey(name: 'zOrder')
+  final int? zOrder;
+
+  @JsonKey(name: 'alpha')
+  final double? alpha;
+
+  @JsonKey(name: 'mirror')
+  final bool? mirror;
+
+  factory TranscodingVideoStream.fromJson(Map&lt;String, dynamic> json) =>
+      _$TranscodingVideoStreamFromJson(json);
+
+  Map&lt;String, dynamic> toJson() => _$TranscodingVideoStreamToJson(this);
+}</codeblock> </p>
+        </section>
+        <section id="parameters">
+            <title><text conref="../conref/conref_api_metadata.dita#conref_api_metadata/property"/></title>
+            <parml>
+            <plentry>
+                <pt>sourceType</pt>
+                <pd>参与本地合图的视频源类型。详见 <xref keyref="VIDEO_SOURCE_TYPE"/>。</pd>
+            </plentry>
+            <plentry>
+                <pt>remoteUserUid</pt>
+                <pd>
+                    <p>远端用户 ID。</p>
+                    <note type="attention">请仅在参与本地合图的视频源类型为 <apiname keyref="VIDEO_SOURCE_REMOTE" /> 时，使用该参数。</note></pd>
+            </plentry>
+            <plentry>
+                <pt>imageUrl</pt>
+                <pd>
+                    <p>图像的 URL。
+                    <note type="attention">请仅在参与本地合图的视频源类型为图片时，使用该参数。</note></p>
+                </pd>
+            </plentry>
+            <plentry>
+                <pt>mediaPlayerId</pt>
+                <pd>（可选）媒体播放器 ID。当你将 <parmname>sourceType</parmname> 设置为 <apiname keyref="VIDEO_SOURCE_MEDIA_PLAYER"/> 时，需要设置该参数。</pd>
+            </plentry>
+            <plentry props="cpp unreal bp android unity cs electron rn flutter">
+                <pt>x</pt>
+                <pd>参与本地合图的视频的左上角相对于合图画布左上角（原点）的横向位移。</pd>
+            </plentry>
+            <plentry props="cpp unreal bp android unity cs electron rn flutter">
+                <pt>y</pt>
+                <pd>参与本地合图的视频的左上角相对于合图画布左上角（原点）的纵向位移。</pd>
+            </plentry>
+            <plentry props="cpp unreal bp android unity cs electron rn flutter">
+                <pt>width</pt>
+                <pd>参与本地合图的视频的宽度 (px)。</pd>
+            </plentry>
+            <plentry props="cpp unreal bp android unity cs electron rn flutter">
+                <pt>height</pt>
+                <pd>参与本地合图的视频的高度 (px)。</pd>
+            </plentry>
+            <plentry props="ios mac">
+                <pt>rect</pt>
+                <pd>参与本地合图的视频的左上角相对于合图画布左上角（原点）的位置和视频大小，类型为 CGRect。</pd>
+            </plentry>
+            <plentry>
+                <pt>zOrder</pt>
+                <pd>参与本地合图的视频所属的图层的编号。取值范围为 [0,100]。
+                    <ul>
+                    <li>0:（默认值）图层在最下层。</li>
+                    <li>100: 图层在最上层。</li>
+                    </ul></pd>
+            </plentry>
+            <plentry>
+                <pt>alpha</pt>
+                <pd>参与本地合图的视频的透明度。取值范围为 [0.0,1.0]。 0.0 表示透明度为完全透明，1.0 表示透明度为完全不透明。</pd>
+            </plentry>
+            <plentry>
+                <pt>mirror</pt>
+                <pd>是否对参与本地合图的的视频进行镜像：
+                    <ul>
+                    <li><codeph><ph keyref="true" /></codeph>: 将参与本地合图的视频进行镜像。</li>
+                    <li><codeph><ph keyref="false" /></codeph>: （默认值）不将参与本地合图的视频进行镜像。</li>
+                    </ul>
+                    <note type="attention">该参数仅对视频源类型为摄像头的视频生效。</note></pd>
+            </plentry>
+            </parml> </section>
+    </refbody>
+</reference>

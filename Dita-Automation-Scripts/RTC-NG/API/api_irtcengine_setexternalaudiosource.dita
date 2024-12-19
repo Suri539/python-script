@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "reference.dtd">
+<reference id="api_irtcengine_setexternalaudiosource">
+    <title><ph keyref="setExternalAudioSource"/></title>
+    <shortdesc id="short"><ph id="shortdesc">设置外部音频采集参数。</ph></shortdesc>
+    <prolog>
+        <metadata>
+            <keywords>
+                <indexterm keyref="setExternalAudioSource"/>
+            </keywords>
+        </metadata>
+    </prolog>
+    <refbody>
+        <section id="prototype">
+            <p outputclass="codeblock">
+            <codeblock props="android" outputclass="language-java">public abstract int setExternalAudioSource(boolean enabled, int sampleRate, int channels);</codeblock>
+            <codeblock props="hmos" outputclass="language-arkts"></codeblock>
+            <codeblock props="ios mac" outputclass="language-objectivec">- (int)setExternalAudioSource:(BOOL)enabled
+                   sampleRate:(NSInteger)sampleRate
+                     channels:(NSInteger)channels;</codeblock>
+            <codeblock props="cpp unreal" outputclass="language-cpp"/>
+            <codeblock props="electron" outputclass="language-typescript"/>
+            <codeblock props="unity cs" outputclass="language-csharp">public abstract int SetExternalAudioSource(bool enabled, int sampleRate, int channels);</codeblock>
+            <codeblock props="rn" outputclass="language-typescript"/>
+           <codeblock props="flutter" outputclass="language-dart"/> 
+            <codeblock props="reserve" outputclass="language-cpp"></codeblock></p>
+        </section>
+        <section conkeyref="setExternalAudioSource2/detailed_desc" id="detailed_desc" deliveryTarget="details" otherprops="no-title" />
+        <section conkeyref="setExternalAudioSource2/timing" id="timing" deliveryTarget="details" />   
+        <section conkeyref="setExternalAudioSource2/restriction" id="restriction" deliveryTarget="details" />
+        <section id="parameters" deliveryTarget="details">
+            <title>参数</title>
+            <parml>
+            <plentry conkeyref="setExternalAudioSource2/enabled">
+                <pt/>
+                <pd/>
+            </plentry>
+            <plentry conkeyref="setExternalAudioSource2/samplerate">
+                <pt/>
+                <pd/>
+            </plentry>
+            <plentry conkeyref="setExternalAudioSource2/channels">
+                <pt/>
+                <pd/>
+            </plentry>
+            </parml> </section>
+        <section id="return_values">
+            <title>返回值</title>
+            <ul>
+            <li>0：方法调用成功。</li>
+            <li>&lt; 0：方法调用失败。<ph props="cn">详见<xref keyref="error-code-link"/>了解详情和解决建议。</ph></li>
+            </ul> </section>
+    </refbody>
+</reference>

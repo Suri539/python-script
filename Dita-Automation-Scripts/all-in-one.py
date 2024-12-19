@@ -38,6 +38,13 @@ def parse_ditamap(ditamap_path, platform_apis):
 
     # 遍历该平台需要处理的 API 数据
     for api_data in platform_apis:
+        # 跳过 attributes 为 class 且 navtitle 为 "Interface classes" 的 API
+        # 跳过 attributes 为 enum 的 API
+        if (api_data.get('attributes') == 'class' and api_data.get('navtitle') == 'Interface classes') or \
+           api_data.get('attributes') == 'enum':
+            print(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
+            continue
+
         target_href = api_data['toc_href']
         api_key = api_data['key']
 

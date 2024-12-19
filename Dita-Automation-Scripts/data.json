@@ -1,32 +1,46 @@
 {
     "sampleApi":{
-        "key":"do",
-        "keyword":"DO",
+        "key":"sampleApi",
+        "keyword":"SampleAPI",
         "toc_href":"API/toc_channel.dita",
         "id":"",
-        "parentclass":"irtcengine",
+        "parentclass":"IRtcEngine",
         "platforms":["android","ios","windows"],
         "navtitle":"核心方法",
-        "attributes":"api"
+        "attributes":"api",
+        "release_area":"all"
     },
-    "Api2":{
-        "key":"thisisatest",
-        "keyword":"THISISATEST",
+    "sampleClass":{
+        "key":"sampleClass",
+        "keyword":"SampleClass",
         "toc_href":"API/toc_channel.dita",
         "id":"",
-        "parentclass":"itest",
+        "parentclass":"none",
         "platforms":["android","ios"],
         "navtitle":"核心方法",
-        "attributes":"class"
+        "attributes":"class",
+        "release_area":"cn"
     },
-    "Api3":{
-        "key":"ontestreust",
-        "keyword":"ONTESTRESULT",
+    "sampleCallback":{
+        "key":"sampleCallback",
+        "keyword":"onSampleCallback",
         "toc_href":"API/toc_channel.dita",
         "id":"",
-        "parentclass":"itestobserver",
+        "parentclass":"IRtcEngineEventHandler",
         "platforms":["android","ios","windows"],
         "navtitle":"RTE 相关",
-        "attributes":"callback"
+        "attributes":"callback",
+        "release_area":"en"
+    },
+    "sampleEnum":{
+        "key":"SAMPLE_ENUM",
+        "keyword":"SampleEnum",
+        "toc_href":"none",
+        "id":"",
+        "parentclass":"none",
+        "platforms":["android","ios","windows"],
+        "navtitle":"RTE 相关",
+        "attributes":"enum",
+        "release_area":"all"
     }
 }

@@ -39,8 +39,29 @@
         "id":"",
         "parentclass":"none",
         "platforms":["android","ios","windows"],
-        "navtitle":"RTE 相关",
+        "navtitle":"Enums",
         "attributes":"enum",
         "release_area":"all"
+    },
+    "imediaplayertest":{
+        "key":"imediaplayertest",
+        "keyword":"IMediaPlayerTest",
+        "toc_href":"API/rtc_interface_class.dita",
+        "id":"",
+        "parentclass":"none",
+        "platforms":["android","ios","windows"],
+        "navtitle":"Interface classes",
+        "attributes":"class"
+    },
+    "Api5":{
+        "key":"playertypes",
+        "keyword":"PlayerTypes",
+        "toc_href":"none",
+        "id":"",
+        "parentclass":"none",
+        "platforms":["android","windows"],
+        "navtitle":"Enums",
+        "attributes":"enum"
     }
 }
+

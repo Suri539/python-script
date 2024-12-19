@@ -5,7 +5,7 @@
         "toc_href":"API/toc_channel.dita",
         "id":"",
         "parentclass":"IRtcEngine",
-        "platforms":["android","ios","windows"],
+        "platforms":["android","ios","windows","unity"],
         "navtitle":"核心方法",
         "attributes":"api",
         "release_area":"all"
@@ -16,7 +16,7 @@
         "toc_href":"API/toc_channel.dita",
         "id":"",
         "parentclass":"none",
-        "platforms":["android","ios"],
+        "platforms":["all"],
         "navtitle":"核心方法",
         "attributes":"class",
         "release_area":"cn"

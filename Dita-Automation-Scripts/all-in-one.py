@@ -7,7 +7,13 @@ PLATFORM_FILES = {
     "android": "RTC_NG_API_Android.ditamap",
     "ios": "RTC_NG_API_iOS.ditamap",
     "windows": "RTC_NG_API_CPP.ditamap",
-    "macos": "RTC_NG_API_macOS.ditamap"
+    "macos": "RTC_NG_API_macOS.ditamap",
+    "flutter": "RTC_NG_API_Flutter.ditamap",
+    "unity": "RTC_NG_API_Unity.ditamap",
+    "electron": "RTC_NG_API_Electron.ditamap",
+    "rn": "RTC_NG_API_RN.ditamap",
+    "unreal": "RTC_NG_API_Unreal.ditamap",
+    "cs": "RTC_NG_API_CS.ditamap"
 }
 
 PLATFORM_TO_KEYSMAP = {
@@ -104,13 +110,24 @@ def process_all_ditamaps():
     """处理所有平台的 ditamap 文件"""
     # 首先按平台组织 API 数据
     platform_api_map = {}
+    
+    # 初始化所有平台的API列表
+    for platform in PLATFORM_FILES.keys():
+        platform_api_map[platform] = []
 
     # 遍历所有 API 数据，按平台分组
     for api_data in json_data.values():
-        for platform in api_data['platforms']:
-            if platform not in platform_api_map:
-                platform_api_map[platform] = []
-            platform_api_map[platform].append(api_data)
+        platforms = api_data['platforms']
+        
+        # 如果platforms是"all"，则添加到所有平台
+        if platforms == ["all"]:
+            for platform in PLATFORM_FILES.keys():
+                platform_api_map[platform].append(api_data)
+        else:
+            # 否则只添加到指定的平台
+            for platform in platforms:
+                if platform in platform_api_map:
+                    platform_api_map[platform].append(api_data)
 
     # 处理每个平台的 ditamap 文件
     for platform, apis in platform_api_map.items():

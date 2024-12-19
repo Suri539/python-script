@@ -19,7 +19,6 @@ PLATFORM_TO_KEYSMAP = {
 
 # 获取基础目录路径
 base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG'
-relations_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG/config/relations-rtc-ng-api.ditamap'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -336,21 +335,116 @@ def insert_relations(relations_path):
     else:
         print(f"No changes made to {relations_path}")
 
+def insert_datatype(datatype_path):
+    """处理 datatype 文件，插入类和枚举的引用"""
+    print(f"\n处理 datatype 文件: {datatype_path}")
+    
+    # 解析 datatype 文件
+    tree = etree.parse(datatype_path)
+    root = tree.getroot()
+    changes_made = 0
+    
+    # 创建平台映射字典
+    platform_map = {config['platform']: config['platform3'] for config in platform_configs}
+    
+    # 遍历所有 API 数据
+    for api_key, api_data in json_data.items():
+        # 只处理 class 和 enum 类型
+        attributes = api_data.get('attributes')
+        if attributes not in ['class', 'enum']:
+            continue
+            
+        # 获取平台信息并转换
+        platforms = api_data.get('platforms', [])
+        props = []
+        for platform in platforms:
+            if platform in platform_map:
+                props.append(platform_map[platform])
+                
+        if not props:
+            continue
+            
+        # 查找对应的 section
+        section = root.find(f".//section[@id='{attributes}']")
+        if section is None:
+            print(f"警告: 未找到 section id='{attributes}'")
+            continue
+            
+        changes_in_api = 0
+        
+        # 为每个平台创建或更新 ul 元素
+        for prop in props:
+            # 查找或创建对应平台的 ul
+            ul = section.find(f"ul[@props='{prop}']")
+            if ul is None:
+                ul = etree.SubElement(section, 'ul')
+                ul.set('props', prop)
+                # 设置适当的缩进
+                ul.tail = '\n            '
+            
+            # 检查是否已存在相同的 xref
+            exists = False
+            for li in ul.findall('li'):
+                xref = li.find('xref')
+                if xref is not None and xref.get('keyref') == api_data['key']:
+                    exists = True
+                    break
+                    
+            if not exists:
+                # 创建新的 li 和 xref 元素
+                new_li = etree.SubElement(ul, 'li')
+                new_xref = etree.SubElement(new_li, 'xref')
+                new_xref.set('keyref', api_data['key'])
+                
+                # 设置缩进
+                new_li.tail = '\n            '
+                
+                changes_in_api += 1
+                print(f"添加了 {api_data['key']} 到 {prop} 平台的 {attributes} 部分")
+                
+                # 对 li 元素进行排序
+                lis = ul.findall('li')
+                sorted_lis = sorted(lis, key=lambda x: x.find('xref').get('keyref', ''))
+                
+                # 清空 ul
+                for child in list(ul):
+                    ul.remove(child)
+                
+                # 重新按顺序添加元素
+                for i, li in enumerate(sorted_lis):
+                    if i < len(sorted_lis) - 1:
+                        li.tail = '\n            '
+                    else:
+                        li.tail = '\n        '
+                    ul.append(li)
+        
+        changes_made += changes_in_api
+    
+    # 如果有修改，保存文件
+    if changes_made > 0:
+        print(f"总共向 {datatype_path} 添加了 {changes_made} 处修改")
+        tree.write(datatype_path, encoding='UTF-8', xml_declaration=True)
+    else:
+        print(f"未对 {datatype_path} 进行任何修改")
+
 def main(platform_configs):
     parse_keysmaps()
     insert_relations(relations_path)
+    insert_datatype(datatype_path)
 
 # 添加到主程序中的调用
 if __name__ == "__main__":
+    relations_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG/config/relations-rtc-ng-api.ditamap'
+    datatype_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG/API/rtc_api_data_type.dita'
     platform_configs = [
-        {'platform': 'android', 'platform1': 'java', 'platform2': 'Android'},
-        {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS'},
-        {'platform': 'macos', 'platform1': 'macos', 'platform2': 'macOS'},
-        {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP'},
-        {'platform': 'flutter', 'platform1': 'flutter', 'platform2': 'Flutter'},
-        {'platform': 'unity', 'platform1': 'unity', 'platform2': 'Unity'},
-        {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron'},
-        {'platform': 'rn', 'platform1': 'rn', 'platform2': 'RN'},
+        {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
+        {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS', 'platform3': 'ios'},
+        {'platform': 'macos', 'platform1': 'macos', 'platform2': 'macOS', 'platform3': 'mac'},
+        {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP', 'platform3': 'cpp'},
+        {'platform': 'flutter', 'platform1': 'flutter', 'platform2': 'Flutter', 'platform3': 'flutter'},
+        {'platform': 'unity', 'platform1': 'unity', 'platform2': 'Unity', 'platform3': 'unity'},
+        {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron', 'platform3': 'electron'},
+        {'platform': 'rn', 'platform1': 'rn', 'platform2': 'RN', 'platform3': 'rn'},
     ]
     main(platform_configs)
 

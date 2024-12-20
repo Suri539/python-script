@@ -94,328 +94,327 @@ def create_dita_files():
         except Exception as e:
             print(f"Error creating {output_filename}: {str(e)}")
 
-create_dita_files()
 
+def parse_ditamap(ditamap_path, platform_apis):
+    """处理单个 ditamap 文件"""
+    print(f"\nProcessing ditamap: {ditamap_path}")
+    print(f"Total APIs to process: {len(platform_apis)}")
 
-# def parse_ditamap(ditamap_path, platform_apis):
-#     """处理单个 ditamap 文件"""
-#     print(f"\nProcessing ditamap: {ditamap_path}")
-#     print(f"Total APIs to process: {len(platform_apis)}")
+    tree = etree.parse(ditamap_path)
+    root = tree.getroot()
+    changes_made = 0
 
-#     tree = etree.parse(ditamap_path)
-#     root = tree.getroot()
-#     changes_made = 0
+    # 记录需要重新排序的 topicref父元素
+    modified_parents = set()
 
-#     # 记录需要重新排序的 topicref父元素
-#     modified_parents = set()
+    # 遍历该平台需要处理的 API 数据
+    for api_data in platform_apis:
+        # 跳过 attributes 为 class 且 navtitle 为 "Interface classes" 的 API
+        # 跳过 attributes 为 enum 的 API
+        if (api_data.get('attributes') == 'class' and api_data.get('navtitle') == 'Interface classes') or \
+           api_data.get('attributes') == 'enum':
+            print(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
+            continue
 
-#     # 遍历该平台需要处理的 API 数据
-#     for api_data in platform_apis:
-#         # 跳过 attributes 为 class 且 navtitle 为 "Interface classes" 的 API
-#         # 跳过 attributes 为 enum 的 API
-#         if (api_data.get('attributes') == 'class' and api_data.get('navtitle') == 'Interface classes') or \
-#            api_data.get('attributes') == 'enum':
-#             print(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
-#             continue
+        target_href = api_data['toc_href']
+        api_key = api_data['key']
 
-#         target_href = api_data['toc_href']
-#         api_key = api_data['key']
+        # 查找目标位置并添加新的 topicref
+        for topicref in root.iter('topicref'):
+            if topicref.get('href') == target_href:
+                # 获取当前 topicref 的缩进级别
+                current_indent = ''
+                parent = topicref
+                while parent is not None:
+                    current_indent += '    '
+                    parent = parent.getparent()
 
-#         # 查找目标位置并添加新的 topicref
-#         for topicref in root.iter('topicref'):
-#             if topicref.get('href') == target_href:
-#                 # 获取当前 topicref 的缩进级别
-#                 current_indent = ''
-#                 parent = topicref
-#                 while parent is not None:
-#                     current_indent += '    '
-#                     parent = parent.getparent()
+                # 先添加一个换行和缩进
+                topicref.tail = '\n' + current_indent
 
-#                 # 先添加一个换行和缩进
-#                 topicref.tail = '\n' + current_indent
+                new_topicref = etree.Element('topicref')
+                new_topicref.set('keyref', api_key)
+                new_topicref.set('toc', 'no')
+                # 设置新元素的缩进
+                new_topicref.tail = '\n' + current_indent
 
-#                 new_topicref = etree.Element('topicref')
-#                 new_topicref.set('keyref', api_key)
-#                 new_topicref.set('toc', 'no')
-#                 # 设置新元素的缩进
-#                 new_topicref.tail = '\n' + current_indent
+                topicref.append(new_topicref)
+                changes_made += 1
+                print(f"Added new topicref with keyref='{api_key}' under {target_href}")
 
-#                 topicref.append(new_topicref)
-#                 changes_made += 1
-#                 print(f"Added new topicref with keyref='{api_key}' under {target_href}")
+                # 将修改过的父元素添加到集合中
+                modified_parents.add(topicref)
 
-#                 # 将修改过的父元素添加到集合中
-#                 modified_parents.add(topicref)
+    # 对所有修改过的父元素进行子元素排序
+    for parent in modified_parents:
+        # 获取所有子元素
+        children = list(parent)
+        if children:
+            # 按字母顺序排序
+            children.sort(key=lambda x: x.get('keyref', '').lower())
 
-#     # 对所有修改过的父元素进行子元素排序
-#     for parent in modified_parents:
-#         # 获取所有子元素
-#         children = list(parent)
-#         if children:
-#             # 按字母顺序排序
-#             children.sort(key=lambda x: x.get('keyref', '').lower())
+            # 重新设置子元素的顺序
+            for i, child in enumerate(children):
+                # 如果不是最后一个元素，设置换行和缩进
+                if i < len(children) - 1:
+                    child.tail = '\n' + current_indent
+                # 如果是最后一个元素，设置换行和父级缩进
+                else:
+                    child.tail = '\n' + current_indent[:-4]
+                # 把元素加到正确的位置
+                parent.append(child)
 
-#             # 重新设置子元素的顺序
-#             for i, child in enumerate(children):
-#                 # 如果不是最后一个元素，设置换行和缩进
-#                 if i < len(children) - 1:
-#                     child.tail = '\n' + current_indent
-#                 # 如果是最后一个元素，设置换行和父级缩进
-#                 else:
-#                     child.tail = '\n' + current_indent[:-4]
-#                 # 把元素加到正确的位置
-#                 parent.append(child)
-
-#     # 如果有修改，写入文件
-#     if changes_made > 0:
-#         print(f"\nWriting {changes_made} changes to {ditamap_path}")
-#         tree.write(ditamap_path, encoding='UTF-8', xml_declaration=True)
-#     else:
-#         print(f"\nNo changes made to {ditamap_path}")
-
-# def process_all_ditamaps():
-#     """处理所有平台的 ditamap 文件"""
-#     # 首先按平台组织 API 数据
-#     platform_api_map = {}
-
-#     # 初始化所有平台的API列表
-#     for platform in PLATFORM_FILES.keys():
-#         platform_api_map[platform] = []
-
-#     # 遍历所有 API 数据，按平台分组
-#     for api_data in json_data.values():
-#         platforms = api_data['platforms']
-
-#         # 如果platforms是"all"，则添加到所有平台
-#         if platforms == ["all"]:
-#             for platform in PLATFORM_FILES.keys():
-#                 platform_api_map[platform].append(api_data)
-#         else:
-#             # 否则只添加到指定的平台
-#             for platform in platforms:
-#                 if platform in platform_api_map:
-#                     platform_api_map[platform].append(api_data)
-
-#     # 处理每个平台的 ditamap 文件
-#     for platform, apis in platform_api_map.items():
-#         if platform in PLATFORM_FILES:
-#             ditamap_path = os.path.join(base_dir, PLATFORM_FILES[platform])
-#             if os.path.exists(ditamap_path):
-#                 parse_ditamap(ditamap_path, apis)
-#             else:
-#                 print(f"Warning: Ditamap file not found for platform {platform}: {ditamap_path}")
-#         else:
-#             print(f"Warning: No ditamap file mapping for platform {platform}")
-
-# # 添加所有的 ditamap
-# process_all_ditamaps()
-
-def create_and_insert_keydef(root, api_data, platform):
-    """创建并插入新的 keydef 元素"""
-    # 获取第一个 topichead 下的第一个 keydef 作为参考
-    reference_keydef = root.find('.//topichead/keydef')
-    if reference_keydef is None:
-        print("Warning: No reference keydef found for indentation")
-        return False
-
-    # 获取基础缩进（keydef 元素的缩进）
-    base_indent = (reference_keydef.tail or '').rpartition('\n')[2]
-
-    # 检查是否为 enum 类型
-    if isinstance(api_data.get('attributes'), dict) and api_data['attributes'].get('type') == 'enum':
-        # 插入 enum keydef
-        target_navtitle = api_data.get('navtitle')
-        if not target_navtitle:
-            print(f"Warning: No navtitle specified for API {api_data['key']}")
-            return False
-
-        # Create a keydef for the enum itself
-        enum_keydef = etree.Element('keydef')
-        enum_keydef.set('keys', api_data['key'])
-        enum_keydef.set('href', f"../API/enum_{api_data['key'].lower()}.dita")
-        enum_keydef.text = '\n' + base_indent + '    '
-        enum_keydef.tail = '\n' + base_indent
-
-        topicmeta = etree.SubElement(enum_keydef, 'topicmeta')
-        topicmeta.text = '\n' + base_indent + '        '
-        topicmeta.tail = '\n' + base_indent + '    '
-
-        keywords = etree.SubElement(topicmeta, 'keywords')
-        keywords.text = '\n' + base_indent + '            '
-        keywords.tail = '\n' + base_indent + '        '
-
-        # 获取当前平台的关键字
-        keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
-        keyword = etree.SubElement(keywords, 'keyword')
-        keyword.text = keyword_value
-        keyword.tail = '\n' + base_indent + '        '
-
-        # Insert the enum keydef and then the individual enum values
-        for topichead in root.iter('topichead'):
-            if topichead.get('navtitle') == target_navtitle:
-                # Insert the enum keydef at the beginning of the topichead
-                topichead.append(enum_keydef)
-
-                # Now proceed to add individual enum values after the main enum keydef
-                if platform in api_data['attributes']['enumerations'][0]:
-                    enums = api_data['attributes']['enumerations'][0][platform]
-                    for enum in enums:
-                        for alias, value in enum.items():
-                            # Check if a keydef with the same key already exists
-                            if any(existing_keydef.get('keys') == alias for existing_keydef in topichead.findall('keydef')):
-                                print(f"Warning: Keydef with key '{alias}' already exists in {target_navtitle}")
-                                continue
-
-                            enum_value_keydef = etree.Element('keydef')
-                            enum_value_keydef.set('keys', alias)
-                            enum_value_keydef.text = '\n' + base_indent + '    '
-                            enum_value_keydef.tail = '\n' + base_indent
-
-                            topicmeta = etree.SubElement(enum_value_keydef, 'topicmeta')
-                            topicmeta.text = '\n' + base_indent + '        '
-                            topicmeta.tail = '\n' + base_indent + '    '
-
-                            keywords = etree.SubElement(topicmeta, 'keywords')
-                            keywords.text = '\n' + base_indent + '            '
-                            keywords.tail = '\n' + base_indent + '        '
-
-                            keyword = etree.SubElement(keywords, 'keyword')
-                            keyword.text = value
-                            keyword.tail = '\n' + base_indent + '        '
-
-                            # Insert enum value keydef
-                            topichead.append(enum_value_keydef)
-
-                return True
-
-        print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
-        return False
-
-    # 处理非 enum 类型的 keydef
-    new_keydef = etree.Element('keydef')
-    new_keydef.set('keys', api_data['key'])
-
-    # 获取attributes和parentclass
-    attributes = api_data.get('attributes', '')
-    parentclass = api_data.get('parentclass', '').lower()
-
-    # 根据不同条件构建href
-    if attributes == 'enum':
-        # enum类型的特殊处理，移除keyname中的下划线
-        keyname = api_data['key'].lower().replace('_', '')
-        new_keydef.set('href', f"../API/{attributes}_{keyname}.dita")
-    elif parentclass == 'none':
-        # parentclass为none的处理
-        new_keydef.set('href', f"../API/{attributes}_{api_data['key'].lower()}.dita")
+    # 如果有修改，写入文件
+    if changes_made > 0:
+        print(f"\nWriting {changes_made} changes to {ditamap_path}")
+        tree.write(ditamap_path, encoding='UTF-8', xml_declaration=True)
     else:
-        # 默认处理
-        new_keydef.set('href', f"../API/{attributes}_{parentclass}_{api_data['key'].lower()}.dita")
+        print(f"\nNo changes made to {ditamap_path}")
 
-    new_keydef.text = '\n' + base_indent + '    '  # 为第一个子元素添加缩进
-    new_keydef.tail = '\n' + base_indent
+def process_all_ditamaps():
+    """处理所有平台的 ditamap 文件"""
+    ditamap_base_dir =os.path.join(base_dir, 'RTC-NG')
 
-    if 'keyword' in api_data:
-        # 创建 topicmeta
-        topicmeta = etree.SubElement(new_keydef, 'topicmeta')
-        topicmeta.text = '\n' + base_indent + '        '  # 为 keywords 添加缩进
-        topicmeta.tail = '\n' + base_indent + '    '
+    # 首先按平台组织 API 数据
+    platform_api_map = {}
+    # 初始化所有平台的API列表
+    for platform in PLATFORM_FILES.keys():
+        platform_api_map[platform] = []
 
-        # 创建 keywords
-        keywords = etree.SubElement(topicmeta, 'keywords')
-        keywords.text = '\n' + base_indent + '            '  # 为 keyword 添加缩进
-        keywords.tail = '\n' + base_indent + '        '
+    # 遍历所有 API 数据，按平台分组
+    for api_data in json_data.values():
+        platforms = api_data['platforms']
 
-        # 获取当前平台的关键字
-        keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
-        keyword = etree.SubElement(keywords, 'keyword')
-        keyword.text = keyword_value
-        keyword.tail = '\n' + base_indent + '        '
-
-    # 查找目标 topichead 并插入
-    target_navtitle = api_data.get('navtitle')
-    if not target_navtitle:
-        print(f"Warning: No navtitle specified for API {api_data['key']}")
-        return False
-
-    for topichead in root.iter('topichead'):
-        if topichead.get('navtitle') == target_navtitle:
-            # 检查是否已存在相同的 keydef
-            for existing_keydef in topichead.findall('keydef'):
-                if existing_keydef.get('keys') == api_data['key']:
-                    print(f"Warning: Keydef with key '{api_data['key']}' already exists in {target_navtitle}")
-                    return False
-            # 添加元素
-            topichead.append(new_keydef)
-            return True
-
-    print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
-    return False
-
-def parse_keysmaps():
-    """处理所有平台的 keysmaps 文件"""
-    # 创建平台到API的映射
-    platform_apis = {
-        'android': [],
-        'ios': [],
-        'windows': [],
-        'macos': [],
-        'unreal': [],
-        'cs': [],
-        'electron': [],
-        'flutter': [],
-        'rn': [],
-        'unity': []
-    }
-
-    # 将 API 按平台分类
-    for api_key, api_data in json_data.items():
-        platforms = api_data.get('platforms', [])
-        # 如果platforms是"all"，添加到所有平台
-        if "all" in platforms:
-            for platform in platform_apis.keys():
-                platform_apis[platform].append(api_data)
+        # 如果platforms是"all"，则添加到所有平台
+        if platforms == ["all"]:
+            for platform in PLATFORM_FILES.keys():
+                platform_api_map[platform].append(api_data)
         else:
             # 否则只添加到指定的平台
             for platform in platforms:
-                if platform in platform_apis:
-                    platform_apis[platform].append(api_data)
+                if platform in platform_api_map:
+                    platform_api_map[platform].append(api_data)
 
-    # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
-    keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')
-
-    # 遍历每个平台
-    for json_platform, keysmap_platform in PLATFORM_TO_KEYSMAP.items():
-        keysmap_file = os.path.join(keysmaps_dir, f'keys-rtc-ng-api-{keysmap_platform}.ditamap')
-        if not os.path.exists(keysmap_file):
-            print(f"Warning: Keymap file not found: {keysmap_file}")
-            continue
-
-        print(f"\nProcessing keymap for platform: {json_platform}")
-
-        # 检查该平台是否有需要处理的API
-        if not platform_apis[json_platform]:
-            print(f"No APIs to process for platform {json_platform}")
-            continue
-
-        tree = etree.parse(keysmap_file)
-        root = tree.getroot()
-        changes_made = 0
-
-        # 处理该平台的所有API
-        for api_data in platform_apis[json_platform]:
-            if create_and_insert_keydef(root, api_data, json_platform):
-                changes_made += 1
-                print(f"Added keydef for API {api_data['key']} to {json_platform}")
-
-        # 如果有修改，保存文件
-        if changes_made > 0:
-            print(f"Writing {changes_made} changes to {keysmap_file}")
-            tree.write(keysmap_file, encoding='UTF-8', xml_declaration=True)
+    # 处理每个平台的 ditamap 文件
+    for platform, apis in platform_api_map.items():
+        if platform in PLATFORM_FILES:
+            ditamap_path = os.path.join(ditamap_base_dir, PLATFORM_FILES[platform])
+            if os.path.exists(ditamap_path):
+                parse_ditamap(ditamap_path, apis)
+            else:
+                print(f"Warning: Ditamap file not found for platform {platform}: {ditamap_path}")
         else:
-            print(f"No changes made to {keysmap_file}")
+            print(f"Warning: No ditamap file mapping for platform {platform}")
 
-if __name__ == "__main__":
-    parse_keysmaps()
+# 添加所有的 ditamap
+process_all_ditamaps()
+
+# def create_and_insert_keydef(root, api_data, platform):
+#     """创建并插入新的 keydef 元素"""
+#     # 获取第一个 topichead 下的第一个 keydef 作为参考
+#     reference_keydef = root.find('.//topichead/keydef')
+#     if reference_keydef is None:
+#         print("Warning: No reference keydef found for indentation")
+#         return False
+
+#     # 获取基础缩进（keydef 元素的缩进）
+#     base_indent = (reference_keydef.tail or '').rpartition('\n')[2]
+
+#     # 检查是否为 enum 类型
+#     if isinstance(api_data.get('attributes'), dict) and api_data['attributes'].get('type') == 'enum':
+#         # 插入 enum keydef
+#         target_navtitle = api_data.get('navtitle')
+#         if not target_navtitle:
+#             print(f"Warning: No navtitle specified for API {api_data['key']}")
+#             return False
+
+#         # Create a keydef for the enum itself
+#         enum_keydef = etree.Element('keydef')
+#         enum_keydef.set('keys', api_data['key'])
+#         enum_keydef.set('href', f"../API/enum_{api_data['key'].lower()}.dita")
+#         enum_keydef.text = '\n' + base_indent + '    '
+#         enum_keydef.tail = '\n' + base_indent
+
+#         topicmeta = etree.SubElement(enum_keydef, 'topicmeta')
+#         topicmeta.text = '\n' + base_indent + '        '
+#         topicmeta.tail = '\n' + base_indent + '    '
+
+#         keywords = etree.SubElement(topicmeta, 'keywords')
+#         keywords.text = '\n' + base_indent + '            '
+#         keywords.tail = '\n' + base_indent + '        '
+
+#         # 获取当前平台的关键字
+#         keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
+#         keyword = etree.SubElement(keywords, 'keyword')
+#         keyword.text = keyword_value
+#         keyword.tail = '\n' + base_indent + '        '
+
+#         # Insert the enum keydef and then the individual enum values
+#         for topichead in root.iter('topichead'):
+#             if topichead.get('navtitle') == target_navtitle:
+#                 # Insert the enum keydef at the beginning of the topichead
+#                 topichead.append(enum_keydef)
+
+#                 # Now proceed to add individual enum values after the main enum keydef
+#                 if platform in api_data['attributes']['enumerations'][0]:
+#                     enums = api_data['attributes']['enumerations'][0][platform]
+#                     for enum in enums:
+#                         for alias, value in enum.items():
+#                             # Check if a keydef with the same key already exists
+#                             if any(existing_keydef.get('keys') == alias for existing_keydef in topichead.findall('keydef')):
+#                                 print(f"Warning: Keydef with key '{alias}' already exists in {target_navtitle}")
+#                                 continue
+
+#                             enum_value_keydef = etree.Element('keydef')
+#                             enum_value_keydef.set('keys', alias)
+#                             enum_value_keydef.text = '\n' + base_indent + '    '
+#                             enum_value_keydef.tail = '\n' + base_indent
+
+#                             topicmeta = etree.SubElement(enum_value_keydef, 'topicmeta')
+#                             topicmeta.text = '\n' + base_indent + '        '
+#                             topicmeta.tail = '\n' + base_indent + '    '
+
+#                             keywords = etree.SubElement(topicmeta, 'keywords')
+#                             keywords.text = '\n' + base_indent + '            '
+#                             keywords.tail = '\n' + base_indent + '        '
+
+#                             keyword = etree.SubElement(keywords, 'keyword')
+#                             keyword.text = value
+#                             keyword.tail = '\n' + base_indent + '        '
+
+#                             # Insert enum value keydef
+#                             topichead.append(enum_value_keydef)
+
+#                 return True
+
+#         print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+#         return False
+
+#     # 处理非 enum 类型的 keydef
+#     new_keydef = etree.Element('keydef')
+#     new_keydef.set('keys', api_data['key'])
+
+#     # 获取attributes和parentclass
+#     attributes = api_data.get('attributes', '')
+#     parentclass = api_data.get('parentclass', '').lower()
+
+#     # 根据不同条件构建href
+#     if attributes == 'enum':
+#         # enum类型的特殊处理，移除keyname中的下划线
+#         keyname = api_data['key'].lower().replace('_', '')
+#         new_keydef.set('href', f"../API/{attributes}_{keyname}.dita")
+#     elif parentclass == 'none':
+#         # parentclass为none的处理
+#         new_keydef.set('href', f"../API/{attributes}_{api_data['key'].lower()}.dita")
+#     else:
+#         # 默认处理
+#         new_keydef.set('href', f"../API/{attributes}_{parentclass}_{api_data['key'].lower()}.dita")
+
+#     new_keydef.text = '\n' + base_indent + '    '  # 为第一个子元素添加缩进
+#     new_keydef.tail = '\n' + base_indent
+
+#     if 'keyword' in api_data:
+#         # 创建 topicmeta
+#         topicmeta = etree.SubElement(new_keydef, 'topicmeta')
+#         topicmeta.text = '\n' + base_indent + '        '  # 为 keywords 添加缩进
+#         topicmeta.tail = '\n' + base_indent + '    '
+
+#         # 创建 keywords
+#         keywords = etree.SubElement(topicmeta, 'keywords')
+#         keywords.text = '\n' + base_indent + '            '  # 为 keyword 添加缩进
+#         keywords.tail = '\n' + base_indent + '        '
+
+#         # 获取当前平台的关键字
+#         keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
+#         keyword = etree.SubElement(keywords, 'keyword')
+#         keyword.text = keyword_value
+#         keyword.tail = '\n' + base_indent + '        '
+
+#     # 查找目标 topichead 并插入
+#     target_navtitle = api_data.get('navtitle')
+#     if not target_navtitle:
+#         print(f"Warning: No navtitle specified for API {api_data['key']}")
+#         return False
+
+#     for topichead in root.iter('topichead'):
+#         if topichead.get('navtitle') == target_navtitle:
+#             # 检查是否已存在相同的 keydef
+#             for existing_keydef in topichead.findall('keydef'):
+#                 if existing_keydef.get('keys') == api_data['key']:
+#                     print(f"Warning: Keydef with key '{api_data['key']}' already exists in {target_navtitle}")
+#                     return False
+#             # 添加元素
+#             topichead.append(new_keydef)
+#             return True
+
+#     print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+#     return False
+
+# def parse_keysmaps():
+#     """处理所有平台的 keysmaps 文件"""
+#     # 创建平台到API的映射
+#     platform_apis = {
+#         'android': [],
+#         'ios': [],
+#         'windows': [],
+#         'macos': [],
+#         'unreal': [],
+#         'cs': [],
+#         'electron': [],
+#         'flutter': [],
+#         'rn': [],
+#         'unity': []
+#     }
+
+#     # 将 API 按平台分类
+#     for api_key, api_data in json_data.items():
+#         platforms = api_data.get('platforms', [])
+#         # 如果platforms是"all"，添加到所有平台
+#         if "all" in platforms:
+#             for platform in platform_apis.keys():
+#                 platform_apis[platform].append(api_data)
+#         else:
+#             # 否则只添加到指定的平台
+#             for platform in platforms:
+#                 if platform in platform_apis:
+#                     platform_apis[platform].append(api_data)
+
+#     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
+#     keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')
+
+#     # 遍历每个平台
+#     for json_platform, keysmap_platform in PLATFORM_TO_KEYSMAP.items():
+#         keysmap_file = os.path.join(keysmaps_dir, f'keys-rtc-ng-api-{keysmap_platform}.ditamap')
+#         if not os.path.exists(keysmap_file):
+#             print(f"Warning: Keymap file not found: {keysmap_file}")
+#             continue
+
+#         print(f"\nProcessing keymap for platform: {json_platform}")
+
+#         # 检查该平台是否有需要处理的API
+#         if not platform_apis[json_platform]:
+#             print(f"No APIs to process for platform {json_platform}")
+#             continue
+
+#         tree = etree.parse(keysmap_file)
+#         root = tree.getroot()
+#         changes_made = 0
+
+#         # 处理该平台的所有API
+#         for api_data in platform_apis[json_platform]:
+#             if create_and_insert_keydef(root, api_data, json_platform):
+#                 changes_made += 1
+#                 print(f"Added keydef for API {api_data['key']} to {json_platform}")
+
+#         # 如果有修改，保存文件
+#         if changes_made > 0:
+#             print(f"Writing {changes_made} changes to {keysmap_file}")
+#             tree.write(keysmap_file, encoding='UTF-8', xml_declaration=True)
+#         else:
+#             print(f"No changes made to {keysmap_file}")
+
+# if __name__ == "__main__":
+#     parse_keysmaps()
 
 # def insert_relations(relations_path):
 #     """处理 relations 文件，插入 API 关系"""

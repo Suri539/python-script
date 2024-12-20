@@ -3,7 +3,6 @@
         "key":"sampleApi",
         "keyword":"SampleAPI",
         "toc_href":"API/toc_channel.dita",
-        "id":"",
         "parentclass":"IRtcEngine",
         "platforms":["all"],
         "navtitle":"核心方法",
@@ -14,18 +13,52 @@
         "key":"SAMPLE_ENUM",
         "keyword":"SampleEnum",
         "toc_href":"none",
-        "id":"",
         "parentclass":"none",
         "platforms":["android","ios","windows"],
         "navtitle":"Enums",
-        "attributes":"enum",
+        "attributes": {
+            "type": "enum",
+            "enumerations": [
+                {
+                    "android": [
+                        {
+                            "alias1": "c++ enumeration 1",
+                            "value": "fill in the real name of the android enumeration1"
+                        },
+                        {
+                            "alias2": "c++ enumeration 2",
+                            "value": "fill in the real name of the android enumeration2"
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "alias1": "c++ enumeration1",
+                            "value": "fill in the real name of the iosenumeration1"
+                        },
+                        {
+                            "alias2": "c++ enumeration 2",
+                            "value": "fill in the real name of the iosenumeration2"
+                        }
+                    ],
+                    "windows": [
+                        {
+                            "alias1": "c++ enumeration1",
+                            "value": "fill in the real name of the c++ enumeration1"
+                        },
+                        {
+                            "alias2": "c++ enumeration 2",
+                            "value": "fill in the real name of the c++ enumeration2"
+                        }
+                    ]
+                }
+            ]
+        },
         "release_area":"all"
     },
     "imediaplayertest":{
         "key":"imediaplayertest",
         "keyword":"IMediaPlayerTest",
         "toc_href":"API/rtc_interface_class.dita",
-        "id":"",
         "parentclass":"none",
         "platforms":["android","ios","windows"],
         "navtitle":"Interface classes",

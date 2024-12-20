@@ -168,24 +168,49 @@ def create_and_insert_keydef(root, api_data, platform):
             print(f"Warning: No navtitle specified for API {api_data['key']}")
             return False
 
+        # Create a keydef for the enum itself
+        enum_keydef = etree.Element('keydef')
+        enum_keydef.set('keys', api_data['key'])
+        enum_keydef.set('href', f"../API/enum_{api_data['key'].lower()}.dita")
+        enum_keydef.text = '\n' + base_indent + '    '
+        enum_keydef.tail = '\n' + base_indent
+
+        topicmeta = etree.SubElement(enum_keydef, 'topicmeta')
+        topicmeta.text = '\n' + base_indent + '        '
+        topicmeta.tail = '\n' + base_indent + '    '
+
+        keywords = etree.SubElement(topicmeta, 'keywords')
+        keywords.text = '\n' + base_indent + '            '
+        keywords.tail = '\n' + base_indent + '        '
+
+        # 获取当前平台的关键字
+        keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
+        keyword = etree.SubElement(keywords, 'keyword')
+        keyword.text = keyword_value
+        keyword.tail = '\n' + base_indent + '        '
+
+        # Insert the enum keydef and then the individual enum values
         for topichead in root.iter('topichead'):
             if topichead.get('navtitle') == target_navtitle:
-                # 为当前平台创建 keydef
+                # Insert the enum keydef at the beginning of the topichead
+                topichead.append(enum_keydef)
+
+                # Now proceed to add individual enum values after the main enum keydef
                 if platform in api_data['attributes']['enumerations'][0]:
                     enums = api_data['attributes']['enumerations'][0][platform]
                     for enum in enums:
                         for alias, value in enum.items():
-                            # 检查是否已存在相同的 keydef
-                            if any(existing_keydef.get('keys') == value for existing_keydef in topichead.findall('keydef')):
-                                print(f"Warning: Keydef with key '{value}' already exists in {target_navtitle}")
+                            # Check if a keydef with the same key already exists
+                            if any(existing_keydef.get('keys') == alias for existing_keydef in topichead.findall('keydef')):
+                                print(f"Warning: Keydef with key '{alias}' already exists in {target_navtitle}")
                                 continue
 
-                            enum_keydef = etree.Element('keydef')
-                            enum_keydef.set('keys', value)  # Set keys to alias's value
-                            enum_keydef.text = '\n' + base_indent + '    '
-                            enum_keydef.tail = '\n' + base_indent
+                            enum_value_keydef = etree.Element('keydef')
+                            enum_value_keydef.set('keys', alias)
+                            enum_value_keydef.text = '\n' + base_indent + '    '
+                            enum_value_keydef.tail = '\n' + base_indent
 
-                            topicmeta = etree.SubElement(enum_keydef, 'topicmeta')
+                            topicmeta = etree.SubElement(enum_value_keydef, 'topicmeta')
                             topicmeta.text = '\n' + base_indent + '        '
                             topicmeta.tail = '\n' + base_indent + '    '
 
@@ -194,11 +219,11 @@ def create_and_insert_keydef(root, api_data, platform):
                             keywords.tail = '\n' + base_indent + '        '
 
                             keyword = etree.SubElement(keywords, 'keyword')
-                            keyword.text = value  # Set keyword to value
+                            keyword.text = value
                             keyword.tail = '\n' + base_indent + '        '
 
-                            # 插入枚举值 keydef
-                            topichead.append(enum_keydef)
+                            # Insert enum value keydef
+                            topichead.append(enum_value_keydef)
 
                 return True
 
@@ -239,9 +264,10 @@ def create_and_insert_keydef(root, api_data, platform):
         keywords.text = '\n' + base_indent + '            '  # 为 keyword 添加缩进
         keywords.tail = '\n' + base_indent + '        '
 
-        # 创建 keyword
+        # 获取当前平台的关键字
+        keyword_value = api_data['keyword'] if isinstance(api_data['keyword'], str) else api_data['keyword'].get(platform, api_data['key'])
         keyword = etree.SubElement(keywords, 'keyword')
-        keyword.text = api_data['keyword']
+        keyword.text = keyword_value
         keyword.tail = '\n' + base_indent + '        '
 
     # 查找目标 topichead 并插入

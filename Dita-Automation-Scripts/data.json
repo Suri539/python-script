@@ -12,7 +12,6 @@
         "platforms": ["all"],
         "navtitle": "核心方法",
         "attributes": "api",
-        "release_area": "all",
         "description": {
             "shortdesc": "short description of the api",
             "detailed_desc": [
@@ -46,10 +45,10 @@
                 }
             ],
             "return_values": {
-                "return_value_android": "return value description",
-                "return_value_ios": "return value description",
-                "return_value_windows": "return value description",
-                "return_value_macos": "return value description"
+                "android": "return value description",
+                "ios": "return value description",
+                "windows": "return value description",
+                "macos": "return value description"
             }
         },
         "prototypes": [
@@ -74,7 +73,6 @@
         "platforms": ["ios", "windows"],
         "navtitle": "媒体播放器",
         "attributes": "callback",
-        "release_area": "cn",
         "description": {
             "shortdesc": "short description of the api",
             "detailed_desc": [
@@ -150,7 +148,6 @@
                 }
             ]
         },
-        "release_area": "all",
         "description": {
             "shortdesc": "short description of the api",
             "detailed_desc": [
@@ -180,7 +177,6 @@
         "platforms": ["all"],
         "navtitle": "Interface classes",
         "attributes": "class",
-        "release_area": "all",
         "description": "description of the interface class"
     },
     "sampledataclass": {
@@ -196,7 +192,6 @@
         "platforms": ["all"],
         "navtitle": "Classes",
         "attributes": "class",
-        "release_area": "all",
         "description": {
             "shortdesc": "short description of the api",
             "detailed_desc": "detailed description of the api",

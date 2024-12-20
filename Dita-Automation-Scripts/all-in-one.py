@@ -2,6 +2,7 @@ encoding = 'utf-8'
 from lxml import etree
 import json
 import os
+import shutil
 
 PLATFORM_FILES = {
     "android": "RTC_NG_API_Android.ditamap",
@@ -30,11 +31,71 @@ PLATFORM_TO_KEYSMAP = {
 }
 
 # 获取基础目录路径
-base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/RTC-NG'
+base_dir = '/Users/fanyuanyuan/Documents/GitHub/python-script-new/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
     json_data = json.load(file)
+
+def create_dita_files():
+    """创建 DITA 文件"""
+    import shutil
+    
+    # 定义模板和目标目录路径
+    template_dir = os.path.join(base_dir, 'templates-cn', 'RTC')
+    target_dir = os.path.join(base_dir, 'RTC-NG', 'API')
+    
+    # 确保目标目录存在
+    os.makedirs(target_dir, exist_ok=True)
+    
+    # 遍历 data.json 文件中的每个 API
+    for api_key, api_data in json_data.items():
+        attributes = api_data.get('attributes', '')
+        parentclass = api_data.get('parentclass', '').lower()
+        key = api_data['key'].lower()
+        
+        # 根据不同的 attributes 选择不同的模板和生成不同的文件名
+        if isinstance(attributes, dict) and attributes.get('type') == 'enum':
+            # 处理 enum 类型
+            template_file = os.path.join(template_dir, 'Enum.dita')
+            output_filename = f'enum_{key}.dita'
+        else:
+            # 处理其他类型
+            if attributes == 'api':
+                template_file = os.path.join(template_dir, 'Method.dita')
+                output_filename = f'api_{parentclass}_{key}.dita' if parentclass != 'none' else f'api_{key}.dita'
+            elif attributes == 'enum':
+                template_file = os.path.join(template_dir, 'Enum.dita')
+                output_filename = f'enum_{key}.dita'
+            elif attributes == 'class':
+                template_file = os.path.join(template_dir, 'Class.dita')
+                output_filename = f'class_{key}.dita'
+            elif attributes == 'callback':
+                template_file = os.path.join(template_dir, 'Callback.dita')
+                output_filename = f'callback_{parentclass}_{key}.dita' if parentclass != 'none' else f'callback_{key}.dita'
+            else:
+                print(f"Warning: Unknown attributes type '{attributes}' for API {api_key}")
+                continue
+        
+        # 构建目标文件路径
+        output_path = os.path.join(target_dir, output_filename)
+        
+        # 如果目标文件已存在，跳过
+        if os.path.exists(output_path):
+            print(f"Skipping existing file: {output_filename}")
+            continue
+        
+        try:
+            # 复制模板文件到目标位置
+            shutil.copy2(template_file, output_path)
+            print(f"Created {output_filename}")
+        except FileNotFoundError:
+            print(f"Error: Template file not found: {template_file}")
+        except Exception as e:
+            print(f"Error creating {output_filename}: {str(e)}")
+
+create_dita_files()
+
 
 # def parse_ditamap(ditamap_path, platform_apis):
 #     """处理单个 ditamap 文件"""
@@ -320,7 +381,7 @@ def parse_keysmaps():
                     platform_apis[platform].append(api_data)
 
     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
-    keysmaps_dir = os.path.join(base_dir, 'config')
+    keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')
 
     # 遍历每个平台
     for json_platform, keysmap_platform in PLATFORM_TO_KEYSMAP.items():

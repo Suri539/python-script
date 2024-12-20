@@ -1,33 +1,140 @@
 {
-    "sampleApi":{
-        "key":"sampleApi",
-        "keyword":"SampleAPI",
-        "toc_href":"API/toc_channel.dita",
-        "parentclass":"IRtcEngine",
-        "platforms":["all"],
-        "navtitle":"核心方法",
-        "attributes":"api",
-        "release_area":"all"
+    "sampleApi": {
+        "key": "sampleApi",
+        "keyword": {
+            "android": "SampleAPI",
+            "ios": "AgoraSampleAPI",
+            "windows": "sampleApi",
+            "macos": "AgoraSampleAPI"
+        },
+        "toc_href": "API/toc_channel.dita",
+        "parentclass": "IRtcEngine",
+        "platforms": ["all"],
+        "navtitle": "核心方法",
+        "attributes": "api",
+        "release_area": "all",
+        "description": {
+            "shortdesc": "short description of the api",
+            "detailed_desc": [
+                {
+                    "since": "which version introduced the api",
+                    "desc": "detailed description of the api"
+                }
+            ],
+            "scenarios": "use case scenarios of the api",
+            "timing": "timing of the api",
+            "restrictions": "restrictions of the api",
+            "parameters": [
+                {
+                    "param1": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name",
+                        "macos": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["all"]
+                },
+                {
+                    "param2": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["android", "ios", "windows"]
+                }
+            ],
+            "return_values": {
+                "return_value_android": "return value description",
+                "return_value_ios": "return value description",
+                "return_value_windows": "return value description",
+                "return_value_macos": "return value description"
+            }
+        },
+        "prototypes": [
+            {
+                "android": "android prototype",
+                "ios": "ios prototype",
+                "windows": "windows prototype",
+                "macos": "macos prototype"
+            }
+        ]
     },
-    "sampleEnum":{
-        "key":"SAMPLE_ENUM",
-        "keyword":"SampleEnum",
-        "toc_href":"none",
-        "parentclass":"none",
-        "platforms":["flutter","ios","windows"],
-        "navtitle":"Enums",
+    "sampleCallback": {
+        "key": "sampleCallback",
+        "keyword": {
+            "android": "sampleCallback",
+            "ios": "AgoraSampleCallback",
+            "windows": "sampleCallback",
+            "macos": "SampleCallback"
+        },
+        "toc_href": "API/toc_channel.dita",
+        "parentclass": "IRtcEngine",
+        "platforms": ["ios", "windows"],
+        "navtitle": "媒体播放器",
+        "attributes": "callback",
+        "release_area": "cn",
+        "description": {
+            "shortdesc": "short description of the api",
+            "detailed_desc": [
+                {
+                    "desc": "detailed description of the api",
+                    "deprecated": "which version deprecated the api"
+                }
+            ],
+            "timing": "timing of the api",
+            "restrictions": "restrictions of the api",
+            "parameters": [
+                {
+                    "param1": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name",
+                        "macos": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["all"]
+                },
+                {
+                    "param2": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["android", "ios", "windows"]
+                }
+            ]
+        },
+        "prototypes": [
+            {
+                "android": "android prototype",
+                "ios": "ios prototype",
+                "windows": "windows prototype",
+                "macos": "macos prototype"
+            }
+        ]
+    },
+    "sampleEnum": {
+        "key": "SAMPLE_ENUM",
+        "keyword": "SampleEnum",
+        "toc_href": "none",
+        "parentclass": "none",
+        "platforms": ["ios", "windows"],
+        "navtitle": "Enums",
         "attributes": {
             "type": "enum",
             "enumerations": [
                 {
-                    "flutter": [
+                    "windows": [
                         {
                             "alias1": "SAMPLE_ENUM_1",
-                            "value": "SampleEnum1"
+                            "value": "the prototype of windows enum1"
                         },
                         {
                             "alias2": "SAMPLE_ENUM_2",
-                            "value": "SampleEnum2"
+                            "value": "the prototype of windows enum2"
                         }
                     ],
                     "ios": [
@@ -43,16 +150,85 @@
                 }
             ]
         },
-        "release_area":"all"
+        "release_area": "all",
+        "description": {
+            "shortdesc": "short description of the api",
+            "detailed_desc": [
+                {
+                    "desc": "detailed description of the api",
+                    "deprecated": "which version deprecated the api",
+                    "enum_desc": [
+                        {
+                            "alias1": "description of the enumeration",
+                            "alias2": "description of the enumeration"
+                        }
+                    ]
+                }
+            ]
+        }
     },
-    "imediaplayertest":{
-        "key":"imediaplayertest",
-        "keyword":"IMediaPlayerTest",
-        "toc_href":"API/rtc_interface_class.dita",
-        "parentclass":"none",
-        "platforms":["android","ios","windows"],
-        "navtitle":"Interface classes",
-        "attributes":"class"
+    "imediaplayertest": {
+        "key": "imediaplayertest",
+        "keyword": {
+            "android": "IMediaPlayerTest",
+            "ios": "AgoraIMediaPlayerTest",
+            "windows": "MediaPlayerTest",
+            "macos": "AgoraIMediaPlayerTest"
+        },
+        "toc_href": "API/rtc_interface_class.dita",
+        "parentclass": "none",
+        "platforms": ["all"],
+        "navtitle": "Interface classes",
+        "attributes": "class",
+        "release_area": "all",
+        "description": "description of the interface class"
+    },
+    "sampledataclass": {
+        "key": "sampledataclass",
+        "keyword": {
+            "android": "sampleDataClass",
+            "ios": "AgoraSampleDataClass",
+            "windows": "DataClass",
+            "macos": "AgoraSampleDataClass"
+        },
+        "toc_href": "none",
+        "parentclass": "none",
+        "platforms": ["all"],
+        "navtitle": "Classes",
+        "attributes": "class",
+        "release_area": "all",
+        "description": {
+            "shortdesc": "short description of the api",
+            "detailed_desc": "detailed description of the api",
+            "parameters": [
+                {
+                    "param1": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name",
+                        "macos": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["all"]
+                },
+                {
+                    "param2": {
+                        "android": "parameter name",
+                        "ios": "parameter name",
+                        "windows": "parameter name"
+                    },
+                    "desc": "parameter description",
+                    "supported_platforms": ["android", "ios", "windows"]
+                }
+            ]
+        },
+        "prototypes": [
+            {
+                "android": "android prototype",
+                "ios": "ios prototype",
+                "windows": "windows prototype",
+                "macos": "macos prototype"
+            }
+        ]
     }
 }
-

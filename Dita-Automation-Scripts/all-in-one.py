@@ -30,7 +30,7 @@ PLATFORM_TO_KEYSMAP = {
 }
 
 # 获取基础目录路径
-base_dir = '/Users/fanyuanyuan/Documents/GitHub/python-script-new/Dita-Automation-Scripts/RTC-NG'
+base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/RTC-NG'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -116,7 +116,7 @@ with open('data.json', 'r', encoding='utf-8') as file:
 #     """处理所有平台的 ditamap 文件"""
 #     # 首先按平台组织 API 数据
 #     platform_api_map = {}
-    
+
 #     # 初始化所有平台的API列表
 #     for platform in PLATFORM_FILES.keys():
 #         platform_api_map[platform] = []
@@ -124,7 +124,7 @@ with open('data.json', 'r', encoding='utf-8') as file:
 #     # 遍历所有 API 数据，按平台分组
 #     for api_data in json_data.values():
 #         platforms = api_data['platforms']
-        
+
 #         # 如果platforms是"all"，则添加到所有平台
 #         if platforms == ["all"]:
 #             for platform in PLATFORM_FILES.keys():
@@ -149,7 +149,7 @@ with open('data.json', 'r', encoding='utf-8') as file:
 # # 添加所有的 ditamap
 # process_all_ditamaps()
 
-def create_and_insert_keydef(root, api_data):
+def create_and_insert_keydef(root, api_data, platform):
     """创建并插入新的 keydef 元素"""
     # 获取第一个 topichead 下的第一个 keydef 作为参考
     reference_keydef = root.find('.//topichead/keydef')
@@ -160,7 +160,52 @@ def create_and_insert_keydef(root, api_data):
     # 获取基础缩进（keydef 元素的缩进）
     base_indent = (reference_keydef.tail or '').rpartition('\n')[2]
 
-    # 创建新的 keydef 元素
+    # 检查是否为 enum 类型
+    if isinstance(api_data.get('attributes'), dict) and api_data['attributes'].get('type') == 'enum':
+        # 插入 enum keydef
+        target_navtitle = api_data.get('navtitle')
+        if not target_navtitle:
+            print(f"Warning: No navtitle specified for API {api_data['key']}")
+            return False
+
+        for topichead in root.iter('topichead'):
+            if topichead.get('navtitle') == target_navtitle:
+                # 为当前平台创建 keydef
+                if platform in api_data['attributes']['enumerations'][0]:
+                    enums = api_data['attributes']['enumerations'][0][platform]
+                    for enum in enums:
+                        for alias, value in enum.items():
+                            # 检查是否已存在相同的 keydef
+                            if any(existing_keydef.get('keys') == value for existing_keydef in topichead.findall('keydef')):
+                                print(f"Warning: Keydef with key '{value}' already exists in {target_navtitle}")
+                                continue
+
+                            enum_keydef = etree.Element('keydef')
+                            enum_keydef.set('keys', value)  # Set keys to alias's value
+                            enum_keydef.text = '\n' + base_indent + '    '
+                            enum_keydef.tail = '\n' + base_indent
+
+                            topicmeta = etree.SubElement(enum_keydef, 'topicmeta')
+                            topicmeta.text = '\n' + base_indent + '        '
+                            topicmeta.tail = '\n' + base_indent + '    '
+
+                            keywords = etree.SubElement(topicmeta, 'keywords')
+                            keywords.text = '\n' + base_indent + '            '
+                            keywords.tail = '\n' + base_indent + '        '
+
+                            keyword = etree.SubElement(keywords, 'keyword')
+                            keyword.text = value  # Set keyword to value
+                            keyword.tail = '\n' + base_indent + '        '
+
+                            # 插入枚举值 keydef
+                            topichead.append(enum_keydef)
+
+                return True
+
+        print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+        return False
+
+    # 处理非 enum 类型的 keydef
     new_keydef = etree.Element('keydef')
     new_keydef.set('keys', api_data['key'])
 
@@ -251,7 +296,6 @@ def parse_keysmaps():
     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
     keysmaps_dir = os.path.join(base_dir, 'config')
 
-
     # 遍历每个平台
     for json_platform, keysmap_platform in PLATFORM_TO_KEYSMAP.items():
         keysmap_file = os.path.join(keysmaps_dir, f'keys-rtc-ng-api-{keysmap_platform}.ditamap')
@@ -272,7 +316,7 @@ def parse_keysmaps():
 
         # 处理该平台的所有API
         for api_data in platform_apis[json_platform]:
-            if create_and_insert_keydef(root, api_data):
+            if create_and_insert_keydef(root, api_data, json_platform):
                 changes_made += 1
                 print(f"Added keydef for API {api_data['key']} to {json_platform}")
 

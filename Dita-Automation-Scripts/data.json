@@ -39,16 +39,6 @@
                             "alias2": "SAMPLE_ENUM_2",
                             "value": "AgoraSampleEnum2"
                         }
-                    ],
-                    "windows": [
-                        {
-                            "alias1": "SAMPLE_ENUM_1",
-                            "value": "SAMPLE_ENUM_1"
-                        },
-                        {
-                            "alias2": "SAMPLE_ENUM_2",
-                            "value": "SAMPLE_ENUM_2"
-                        }
                     ]
                 }
             ]

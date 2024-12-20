@@ -14,40 +14,40 @@
         "keyword":"SampleEnum",
         "toc_href":"none",
         "parentclass":"none",
-        "platforms":["android","ios","windows"],
+        "platforms":["flutter","ios","windows"],
         "navtitle":"Enums",
         "attributes": {
             "type": "enum",
             "enumerations": [
                 {
-                    "android": [
+                    "flutter": [
                         {
-                            "alias1": "c++ enumeration 1",
-                            "value": "fill in the real name of the android enumeration1"
+                            "alias1": "SAMPLE_ENUM_1",
+                            "value": "SampleEnum1"
                         },
                         {
-                            "alias2": "c++ enumeration 2",
-                            "value": "fill in the real name of the android enumeration2"
+                            "alias2": "SAMPLE_ENUM_2",
+                            "value": "SampleEnum2"
                         }
                     ],
                     "ios": [
                         {
-                            "alias1": "c++ enumeration1",
-                            "value": "fill in the real name of the iosenumeration1"
+                            "alias1": "SAMPLE_ENUM_1",
+                            "value": "AgoraSampleEnum1"
                         },
                         {
-                            "alias2": "c++ enumeration 2",
-                            "value": "fill in the real name of the iosenumeration2"
+                            "alias2": "SAMPLE_ENUM_2",
+                            "value": "AgoraSampleEnum2"
                         }
                     ],
                     "windows": [
                         {
-                            "alias1": "c++ enumeration1",
-                            "value": "fill in the real name of the c++ enumeration1"
+                            "alias1": "SAMPLE_ENUM_1",
+                            "value": "SAMPLE_ENUM_1"
                         },
                         {
-                            "alias2": "c++ enumeration 2",
-                            "value": "fill in the real name of the c++ enumeration2"
+                            "alias2": "SAMPLE_ENUM_2",
+                            "value": "SAMPLE_ENUM_2"
                         }
                     ]
                 }

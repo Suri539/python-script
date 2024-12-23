@@ -1,0 +1,73 @@
+{
+    "api_changes": [
+        {
+            "api_name": "setLocalPublishFallbackOption",
+            "api_signature": "virtual int setLocalPublishFallbackOption(PublishFallbackOption option)",
+            "change_type": "create|delete|modify",
+            "change_desc": "变更的总结",
+            "desc": "",
+            "platforms": "ios|android|mac|windows",
+            "parent_class": "IRtcEngine",
+            "parameters": [
+                {
+                    "name": "option",
+                    "type": "PublishFallbackOption",
+                    "desc": "",
+                    "change_type": "create|delete|modify",
+                    "old_value": "",
+                    "new_value": ""
+                }
+            ],
+            "scenario": "适用场景",
+            "timing": "调用时机",
+            "restriction": "调用限制",
+            "return_value": "返回值",
+            "return_value_desc": "返回值描述",
+            "old_api_name": "",
+            "old_api_signature": "",
+            "need_en": "true|false",
+            "extra_info": ""
+        }
+    ],
+    "struct_changes": [
+        {
+            "struct_name": "PublishFallbackOption",
+            "change_type": "create|delete|modify",
+            "change_desc": "变更的总结",
+            "desc": "",
+            "fields": [
+                {
+                    "name": "",
+                    "type": "",
+                    "desc": "",
+                    "change_type": "create|delete|modify",
+                    "old_value": "",
+                    "new_value": ""
+                }
+            ],
+            "old_struct_name": "",
+            "need_en": "true|false",
+            "extra_info": ""
+        }
+    ],
+    "enum_changes": [
+        {
+            "enum_name": "",
+            "change_type": "create|delete|modify",
+            "desc": "",
+            "values": [
+                {
+                    "name": "",
+                    "value": "",
+                    "desc": "",
+                    "change_type": "create|delete|modify",
+                    "old_value": "",
+                    "new_value": ""
+                }
+            ],
+            "old_enum_name": "",
+            "need_en": "true|false",
+            "extra_info": ""
+        }
+    ]
+}

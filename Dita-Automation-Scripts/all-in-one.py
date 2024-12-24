@@ -360,21 +360,18 @@ def parse_keysmaps():
         'rn': [],
         'unity': []
     }
-
     # 将 API 按平台分类
     for api_key, api_data in json_data.items():
-        # Ensure api_data is a dictionary
-        if isinstance(api_data, dict):
-            platforms = api_data.get('platforms', [])
-            # 如果platforms是"all"，添加到所有平台
-            if "all" in platforms:
-                for platform in platform_apis.keys():
+        platforms = api_data.get('platforms', [])
+        # 如果platforms是"all"，添加到所有平台
+        if "all" in platforms:
+            for platform in platform_apis.keys():
+                platform_apis[platform].append(api_data)
+        else:
+            # 否则只添加到指定的平台
+            for platform in platforms:
+                if platform in platform_apis:
                     platform_apis[platform].append(api_data)
-            else:
-                # 否则只添加到指定的平台
-                for platform in platforms:
-                    if platform in platform_apis:
-                        platform_apis[platform].append(api_data)
 
     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
     keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')

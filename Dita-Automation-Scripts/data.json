@@ -163,28 +163,6 @@
                 "remarks": "",
                 "jira": ""
             }
-        },
-        {
-            "key": "imediaplayertest",
-            "change_type": "create|delete|modify",
-            "change_desc": "变更的总结",
-            "keyword": {
-                "android": "IMediaPlayerTest",
-                "ios": "AgoraIMediaPlayerTest",
-                "windows": "MediaPlayerTest",
-                "macos": "AgoraIMediaPlayerTest"
-            },
-            "toc_href": "API/rtc_interface_class.dita",
-            "parentclass": "none",
-            "platforms": ["all"],
-            "navtitle": "Interface classes",
-            "attributes": "class",
-            "description": "description of the interface class",
-            "need_en": "true|false",
-            "extra_info": {
-                "remarks": "",
-                "jira": ""
-            }
         }
     ],
     "enum_changes": [
@@ -208,7 +186,7 @@
                 "detailed_desc": [
                     {
                         "desc": "detailed description of the api",
-                        "deprecated": "which version deprecated the api",
+                        "deprecated": "which version deprecated the api"
                     }
                 ],
                 "enumerations": {

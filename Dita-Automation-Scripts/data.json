@@ -105,55 +105,57 @@
             "parentclass": "none",
             "platforms": ["ios", "windows"],
             "navtitle": "Classes",
-            "shortdesc": "short description of the api",
-            "detailed_desc": [
-                {
-                    "since": "which version introduced the api",
-                    "desc": "detailed description of the api"
-                }
-            ],
             "attributes": "class",
-            "parameters": {
-                "android": [
+            "description": {
+                "shortdesc": "short description of the api",
+                "detailed_desc": [
                     {
-                        "name": "reason",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
+                        "since": "which version introduced the api",
+                        "desc": "detailed description of the api"
                     }
                 ],
-                "ios": [
-                    {
-                        "name": "reason",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ],
-                "windows": [
-                    {
-                        "name": "reason",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ],
-                "macos": [
-                    {
-                        "name": "reason",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ]
+                "parameters": {
+                    "android": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "windows": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "macos": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                }
             },
             "old_struct_name": "",
             "need_en": "true|false",
@@ -201,54 +203,36 @@
             "platforms": ["ios", "windows"],
             "navtitle": "Enums",
             "attributes": "enum",
-            "enumerations": {
-                "windows": [
-                    {
-                        "alias1": "SAMPLE_ENUM_1",
-                        "value": "the prototype of windows enum1",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    },
-                    {
-                        "alias2": "SAMPLE_ENUM_2",
-                        "value": "the prototype of windows enum2",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ],
-                "ios": [
-                    {
-                        "alias1": "SAMPLE_ENUM_1",
-                        "value": "AgoraSampleEnum1",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    },
-                    {
-                        "alias2": "SAMPLE_ENUM_2",
-                        "value": "AgoraSampleEnum2",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ]
-            },
             "description": {
                 "shortdesc": "short description of the api",
                 "detailed_desc": [
                     {
                         "desc": "detailed description of the api",
                         "deprecated": "which version deprecated the api",
-                        "enum_desc": [
-                            {
-                                "alias1": "description of the enumeration",
-                                "alias2": "description of the enumeration"
-                            }
-                        ]
                     }
-                ]
+                ],
+                "enumerations": {
+                    "windows": [
+                        {
+                            "alias": "SAMPLE_ENUM_1",
+                            "value": "the prototype of windows enum1",
+                            "desc": "description of the enumeration",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "alias": "SAMPLE_ENUM_1",
+                            "value": "AgoraSampleEnum1",
+                            "desc": "description of the enumeration",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                }
             },
             "extra_info": {
                 "remarks": "",

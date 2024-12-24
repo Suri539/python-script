@@ -216,7 +216,7 @@ def create_and_insert_keydef(root, api_data, platform):
     base_indent = (reference_keydef.tail or '').rpartition('\n')[2]
 
     # 检查是否为 enum 类型
-    if api_data.get('attributes') == 'enum':
+    if api_data.get('attributes') == 'enum' and 'enumerations' in api_data['description']:
         # 插入 enum keydef
         target_navtitle = api_data.get('navtitle')
         if not target_navtitle:
@@ -225,7 +225,7 @@ def create_and_insert_keydef(root, api_data, platform):
 
         # Create a keydef for the enum itself
         enum_keydef = etree.Element('keydef')
-        enum_keydef.set('keys', api_data['key'])
+        enum_keydef.set('keys', api_data['keyword'].get(platform, api_data['key']))
         enum_keydef.set('href', f"../API/enum_{api_data['key'].lower()}.dita")
         enum_keydef.text = '\n' + base_indent + '    '
         enum_keydef.tail = '\n' + base_indent
@@ -239,7 +239,7 @@ def create_and_insert_keydef(root, api_data, platform):
         keywords.tail = '\n' + base_indent + '        '
 
         keyword = etree.SubElement(keywords, 'keyword')
-        keyword.text = api_data['key']
+        keyword.text = api_data['keyword'].get(platform, api_data['key'])
         keyword.tail = '\n' + base_indent + '        '
 
         # Insert the enum keydef
@@ -248,31 +248,32 @@ def create_and_insert_keydef(root, api_data, platform):
                 topichead.append(enum_keydef)
 
                 # Now proceed to add individual enum values after the main enum keydef
-                for enum_platform, enums in api_data['enumerations'][0].items():
+                for enum_platform, enums in api_data['description']['enumerations'].items():
                     if platform == enum_platform:
                         for enum in enums:
-                            for alias, value in enum.items():
-                                if alias.startswith("alias"):
-                                    # Create a keydef for each enumeration
-                                    enum_value_keydef = etree.Element('keydef')
-                                    enum_value_keydef.set('keys', alias)
-                                    enum_value_keydef.text = '\n' + base_indent + '    '
-                                    enum_value_keydef.tail = '\n' + base_indent
+                            alias = enum.get('alias')
+                            value = enum.get('value')
+                            if alias and value:
+                                # Create a keydef for each enumeration
+                                enum_value_keydef = etree.Element('keydef')
+                                enum_value_keydef.set('keys', alias)  # Set keys to alias
+                                enum_value_keydef.text = '\n' + base_indent + '    '
+                                enum_value_keydef.tail = '\n' + base_indent
 
-                                    topicmeta = etree.SubElement(enum_value_keydef, 'topicmeta')
-                                    topicmeta.text = '\n' + base_indent + '        '
-                                    topicmeta.tail = '\n' + base_indent + '    '
+                                topicmeta = etree.SubElement(enum_value_keydef, 'topicmeta')
+                                topicmeta.text = '\n' + base_indent + '        '
+                                topicmeta.tail = '\n' + base_indent + '    '
 
-                                    keywords = etree.SubElement(topicmeta, 'keywords')
-                                    keywords.text = '\n' + base_indent + '            '
-                                    keywords.tail = '\n' + base_indent + '        '
+                                keywords = etree.SubElement(topicmeta, 'keywords')
+                                keywords.text = '\n' + base_indent + '            '
+                                keywords.tail = '\n' + base_indent + '        '
 
-                                    keyword = etree.SubElement(keywords, 'keyword')
-                                    keyword.text = value
-                                    keyword.tail = '\n' + base_indent + '        '
+                                keyword = etree.SubElement(keywords, 'keyword')
+                                keyword.text = value  # Set keyword to value
+                                keyword.tail = '\n' + base_indent + '        '
 
-                                    # Insert enum value keydef
-                                    topichead.append(enum_value_keydef)
+                                # Insert enum value keydef
+                                topichead.append(enum_value_keydef)
 
                 return True
 

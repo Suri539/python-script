@@ -109,9 +109,9 @@ def parse_ditamap(ditamap_path, platform_apis):
 
     # 遍历该平台需要处理的 API 数据
     for api_data in platform_apis:
-        # 跳过 attributes 为 class 且 navtitle 为 "Interface classes" 的 API
+        # 跳过 attributes 为 class 且 navtitle 不为 "Interface classes" 的 API
         # 跳过 attributes 为 enum 的 API
-        if (api_data.get('attributes') == 'class' and api_data.get('navtitle') == 'Interface classes') or \
+        if (api_data.get('attributes') == 'class' and api_data.get('navtitle') != 'Interface classes') or \
            api_data.get('attributes') == 'enum':
             print(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
             continue
@@ -173,27 +173,25 @@ def parse_ditamap(ditamap_path, platform_apis):
 
 def process_all_ditamaps():
     """处理所有平台的 ditamap 文件"""
-    ditamap_base_dir =os.path.join(base_dir, 'RTC-NG')
+    ditamap_base_dir = os.path.join(base_dir, 'RTC-NG')
 
     # 首先按平台组织 API 数据
-    platform_api_map = {}
-    # 初始化所有平台的API列表
-    for platform in PLATFORM_FILES.keys():
-        platform_api_map[platform] = []
+    platform_api_map = {platform: [] for platform in PLATFORM_FILES.keys()}
 
     # 遍历所有 API 数据，按平台分组
-    for api_data in json_data.values():
-        platforms = api_data['platforms']
+    for change_type in ['api_changes', 'struct_changes', 'enum_changes']:
+        for api_data in json_data.get(change_type, []):
+            platforms = api_data.get('platforms', [])
 
-        # 如果platforms是"all"，则添加到所有平台
-        if platforms == ["all"]:
-            for platform in PLATFORM_FILES.keys():
-                platform_api_map[platform].append(api_data)
-        else:
-            # 否则只添加到指定的平台
-            for platform in platforms:
-                if platform in platform_api_map:
+            # 如果platforms是"all"，则添加到所有平台
+            if "all" in platforms:
+                for platform in PLATFORM_FILES.keys():
                     platform_api_map[platform].append(api_data)
+            else:
+                # 否则只添加到指定的平台
+                for platform in platforms:
+                    if platform in platform_api_map:
+                        platform_api_map[platform].append(api_data)
 
     # 处理每个平台的 ditamap 文件
     for platform, apis in platform_api_map.items():
@@ -365,16 +363,18 @@ def parse_keysmaps():
 
     # 将 API 按平台分类
     for api_key, api_data in json_data.items():
-        platforms = api_data.get('platforms', [])
-        # 如果platforms是"all"，添加到所有平台
-        if "all" in platforms:
-            for platform in platform_apis.keys():
-                platform_apis[platform].append(api_data)
-        else:
-            # 否则只添加到指定的平台
-            for platform in platforms:
-                if platform in platform_apis:
+        # Ensure api_data is a dictionary
+        if isinstance(api_data, dict):
+            platforms = api_data.get('platforms', [])
+            # 如果platforms是"all"，添加到所有平台
+            if "all" in platforms:
+                for platform in platform_apis.keys():
                     platform_apis[platform].append(api_data)
+            else:
+                # 否则只添加到指定的平台
+                for platform in platforms:
+                    if platform in platform_apis:
+                        platform_apis[platform].append(api_data)
 
     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
     keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')

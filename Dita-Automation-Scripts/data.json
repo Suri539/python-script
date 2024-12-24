@@ -186,7 +186,7 @@
                 "detailed_desc": [
                     {
                         "desc": "detailed description of the api",
-                        "deprecated": "which version deprecated the api",
+                        "deprecated": "which version deprecated the api"
                     }
                 ],
                 "enumerations": {

@@ -201,42 +201,40 @@
             "platforms": ["ios", "windows"],
             "navtitle": "Enums",
             "attributes": "enum",
-            "enumerations": [
-                {
-                    "windows": [
-                        {
-                            "alias1": "SAMPLE_ENUM_1",
-                            "value": "the prototype of windows enum1",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        },
-                        {
-                            "alias2": "SAMPLE_ENUM_2",
-                            "value": "the prototype of windows enum2",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        }
-                    ],
-                    "ios": [
-                        {
-                            "alias1": "SAMPLE_ENUM_1",
-                            "value": "AgoraSampleEnum1",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        },
-                        {
-                            "alias2": "SAMPLE_ENUM_2",
-                            "value": "AgoraSampleEnum2",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        }
-                    ]
-                }
-            ],
+            "enumerations": {
+                "windows": [
+                    {
+                        "alias1": "SAMPLE_ENUM_1",
+                        "value": "the prototype of windows enum1",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    },
+                    {
+                        "alias2": "SAMPLE_ENUM_2",
+                        "value": "the prototype of windows enum2",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ],
+                "ios": [
+                    {
+                        "alias1": "SAMPLE_ENUM_1",
+                        "value": "AgoraSampleEnum1",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    },
+                    {
+                        "alias2": "SAMPLE_ENUM_2",
+                        "value": "AgoraSampleEnum2",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ]
+            },
             "description": {
                 "shortdesc": "short description of the api",
                 "detailed_desc": [

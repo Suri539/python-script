@@ -14,7 +14,7 @@
                 "windows": "sampleApi",
                 "macos": "AgoraSampleAPI"
             },
-            "change_type": "create|delete|modify",
+            "change_type": "create",
             "change_desc": "变更的总结",
             "toc_href": "API/toc_channel.dita",
             "parentclass": "IRtcEngine",
@@ -29,26 +29,27 @@
                         "desc": "detailed description of the api"
                     }
                 ],
-                "scenarios": "use case scenarios of the api",
+                "scenarios": "",
                 "timing": "timing of the api",
                 "restrictions": "restrictions of the api",
+                "related": "",
                 "parameters": {
                     "android": [
                         {
                             "name": "option",
                             "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "create|delete|modify",
+                            "desc": "1",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
                     ],
                     "ios": [
                         {
-                            "name": "option",
+                            "name": "options",
                             "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "create|delete|modify",
+                            "desc": "1",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -57,18 +58,18 @@
                         {
                             "name": "option",
                             "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "create|delete|modify",
+                            "desc": "2",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
                     ],
                     "macos": [
                         {
-                            "name": "option",
+                            "name": "options",
                             "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "create|delete|modify",
+                            "desc": "2",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -99,7 +100,7 @@
                 "windows": "testConfig",
                 "macos": "AgoraTestConfig"
             },
-            "change_type": "create|delete|modify",
+            "change_type": "create",
             "change_desc": "变更的总结",
             "toc_href": "none",
             "parentclass": "none",
@@ -120,7 +121,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -130,7 +131,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -140,7 +141,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -150,7 +151,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -168,7 +169,7 @@
     "enum_changes": [
         {
             "key": "SAMPLE_ENUM",
-            "change_type": "create|delete|modify",
+            "change_type": "create",
             "change_desc": "变更的总结",
             "keyword": {
                 "android": "",
@@ -186,7 +187,7 @@
                 "detailed_desc": [
                     {
                         "desc": "detailed description of the api",
-                        "deprecated": "which version deprecated the api",
+                        "deprecated": "which version deprecated the api"
                     }
                 ],
                 "enumerations": {
@@ -195,7 +196,7 @@
                             "alias": "SAMPLE_ENUM_1",
                             "value": "the prototype of windows enum1",
                             "desc": "description of the enumeration",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -205,7 +206,7 @@
                             "alias": "SAMPLE_ENUM_1",
                             "value": "AgoraSampleEnum1",
                             "desc": "description of the enumeration",
-                            "change_type": "create|delete|modify",
+                            "change_type": "create",
                             "old_value": "",
                             "new_value": ""
                         }

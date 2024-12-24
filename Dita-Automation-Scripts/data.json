@@ -32,24 +32,48 @@
                 "scenarios": "use case scenarios of the api",
                 "timing": "timing of the api",
                 "restrictions": "restrictions of the api",
-                "parameters": [
-                    {
-                        "name": "option",
-                        "type": "PublishFallbackOption",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    },
-                    {
-                        "name": "option",
-                        "type": "PublishFallbackOption",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ],
+                "parameters": {
+                    "android": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "windows": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "macos": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
                 "return_values": {
                     "android": "return value description",
                     "ios": "return value description",
@@ -59,7 +83,10 @@
                 "old_api_name": "",
                 "old_api_signature": "",
                 "need_en": "true|false",
-                "extra_info": ""
+                "extra_info": {
+                    "remarks": "",
+                    "jira": ""
+                }
             }
         }
     ],
@@ -78,37 +105,64 @@
             "parentclass": "none",
             "platforms": ["ios", "windows"],
             "navtitle": "Classes",
-            "shortdesc": "short description of the api",
-            "detailed_desc": [
-                {
-                    "since": "which version introduced the api",
-                    "desc": "detailed description of the api"
-                }
-            ],
             "attributes": "class",
-            "parameters": [
-                {
-                    "name": "reason",
-                    "type": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": "",
-                    "supported_platforms": ["ios", "windows"]
-                },
-                {
-                    "name": "state",
-                    "type": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": "",
-                    "supported_platforms": ["ios", "windows"]
+            "description": {
+                "shortdesc": "short description of the api",
+                "detailed_desc": [
+                    {
+                        "since": "which version introduced the api",
+                        "desc": "detailed description of the api"
+                    }
+                ],
+                "parameters": {
+                    "android": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "windows": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "macos": [
+                        {
+                            "name": "reason",
+                            "type": "",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
                 }
-            ],
+            },
             "old_struct_name": "",
             "need_en": "true|false",
-            "extra_info": ""
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
+            }
         },
         {
             "key": "imediaplayertest",
@@ -127,7 +181,10 @@
             "attributes": "class",
             "description": "description of the interface class",
             "need_en": "true|false",
-            "extra_info": ""
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
+            }
         }
     ],
     "enum_changes": [
@@ -146,19 +203,20 @@
             "platforms": ["ios", "windows"],
             "navtitle": "Enums",
             "attributes": "enum",
-            "enumerations": [
-                {
+            "description": {
+                "shortdesc": "short description of the api",
+                "detailed_desc": [
+                    {
+                        "desc": "detailed description of the api",
+                        "deprecated": "which version deprecated the api",
+                    }
+                ],
+                "enumerations": {
                     "windows": [
                         {
-                            "alias1": "SAMPLE_ENUM_1",
+                            "alias": "SAMPLE_ENUM_1",
                             "value": "the prototype of windows enum1",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        },
-                        {
-                            "alias2": "SAMPLE_ENUM_2",
-                            "value": "the prototype of windows enum2",
+                            "desc": "description of the enumeration",
                             "change_type": "create|delete|modify",
                             "old_value": "",
                             "new_value": ""
@@ -166,36 +224,19 @@
                     ],
                     "ios": [
                         {
-                            "alias1": "SAMPLE_ENUM_1",
+                            "alias": "SAMPLE_ENUM_1",
                             "value": "AgoraSampleEnum1",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
-                        },
-                        {
-                            "alias2": "SAMPLE_ENUM_2",
-                            "value": "AgoraSampleEnum2",
+                            "desc": "description of the enumeration",
                             "change_type": "create|delete|modify",
                             "old_value": "",
                             "new_value": ""
                         }
                     ]
                 }
-            ],
-            "description": {
-                "shortdesc": "short description of the api",
-                "detailed_desc": [
-                    {
-                        "desc": "detailed description of the api",
-                        "deprecated": "which version deprecated the api",
-                        "enum_desc": [
-                            {
-                                "alias1": "description of the enumeration",
-                                "alias2": "description of the enumeration"
-                            }
-                        ]
-                    }
-                ]
+            },
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
             }
         }
     ]

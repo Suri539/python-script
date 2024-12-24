@@ -1,7 +1,7 @@
 {
     "api_changes": [
         {
-            "key": "sampleApi",
+            "key": "joinChannel2",
             "api_signature": {
                 "android": "android prototype",
                 "ios": "ios prototype",
@@ -14,7 +14,7 @@
                 "windows": "sampleApi",
                 "macos": "AgoraSampleAPI"
             },
-            "change_type": "create|delete|modify",
+            "change_type": "modify",
             "change_desc": "变更的总结",
             "toc_href": "API/toc_channel.dita",
             "parentclass": "IRtcEngine",
@@ -38,9 +38,9 @@
                             "name": "option",
                             "type": "PublishFallbackOption",
                             "desc": "",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
+                            "change_type": "modify",
+                            "old_value": "option",
+                            "new_value": "options"
                         }
                     ],
                     "ios": [
@@ -48,9 +48,9 @@
                             "name": "option",
                             "type": "PublishFallbackOption",
                             "desc": "",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
+                            "change_type": "modify",
+                            "old_value": "AgoraOption",
+                            "new_value": "AgoraOptions"
                         }
                     ],
                     "windows": [
@@ -58,9 +58,9 @@
                             "name": "option",
                             "type": "PublishFallbackOption",
                             "desc": "",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
+                            "change_type": "modify",
+                            "old_value": "option",
+                            "new_value": "options"
                         }
                     ],
                     "macos": [
@@ -68,9 +68,9 @@
                             "name": "option",
                             "type": "PublishFallbackOption",
                             "desc": "",
-                            "change_type": "create|delete|modify",
-                            "old_value": "",
-                            "new_value": ""
+                            "change_type": "modify",
+                            "old_value": "AgoraOption",
+                            "new_value": "AgoraOptions"
                         }
                     ]
                 },
@@ -99,7 +99,7 @@
                 "windows": "testConfig",
                 "macos": "AgoraTestConfig"
             },
-            "change_type": "create|delete|modify",
+            "change_type": "modify",
             "change_desc": "变更的总结",
             "toc_href": "none",
             "parentclass": "none",
@@ -120,7 +120,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -130,7 +130,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -140,7 +140,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -150,7 +150,7 @@
                             "name": "reason",
                             "type": "",
                             "desc": "",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -168,7 +168,7 @@
     "enum_changes": [
         {
             "key": "SAMPLE_ENUM",
-            "change_type": "create|delete|modify",
+            "change_type": "modify",
             "change_desc": "变更的总结",
             "keyword": {
                 "android": "",
@@ -195,7 +195,7 @@
                             "alias": "SAMPLE_ENUM_1",
                             "value": "the prototype of windows enum1",
                             "desc": "description of the enumeration",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
@@ -205,7 +205,7 @@
                             "alias": "SAMPLE_ENUM_1",
                             "value": "AgoraSampleEnum1",
                             "desc": "description of the enumeration",
-                            "change_type": "create|delete|modify",
+                            "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }

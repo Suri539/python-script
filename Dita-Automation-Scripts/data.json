@@ -1,42 +1,13 @@
 {
     "api_changes": [
         {
-            "key": "setLocalPublishFallbackOption",
-            "api_signature": "virtual int setLocalPublishFallbackOption(PublishFallbackOption option)",
-            "change_type": "create|delete|modify",
-            "change_desc": "变更的总结",
-            "desc": "",
-            "platforms": "ios|android|mac|windows",
-            "parent_class": "IRtcEngine",
-            "parameters": [
-                {
-                    "name": "option",
-                    "type": "PublishFallbackOption",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": ""
-                }
-            ],
-            "scenario": "适用场景",
-            "timing": "调用时机",
-            "restriction": "调用限制",
-            "return_value": "返回值",
-            "return_value_desc": "返回值描述",
-            "old_api_name": "",
-            "old_api_signature": "",
-            "need_en": "true|false",
-            "extra_info": ""
-        },
-        {
             "key": "sampleApi",
-            "api_signature":
-                {
-                    "android": "android prototype",
-                    "ios": "ios prototype",
-                    "windows": "windows prototype",
-                    "macos": "macos prototype"
-                },
+            "api_signature": {
+                "android": "android prototype",
+                "ios": "ios prototype",
+                "windows": "windows prototype",
+                "macos": "macos prototype"
+            },
             "keyword": {
                 "android": "SampleAPI",
                 "ios": "AgoraSampleAPI",
@@ -94,32 +65,12 @@
     ],
     "struct_changes": [
         {
-            "struct_name": "PublishFallbackOption",
-            "change_type": "create|delete|modify",
-            "change_desc": "变更的总结",
-            "desc": "",
-            "fields": [
-                {
-                    "name": "",
-                    "type": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": ""
-                }
-            ],
-            "old_struct_name": "",
-            "need_en": "true|false",
-            "extra_info": ""
-        },
-        {
-            "key": "playerConfig",
-            "keyword":
-            {
-                "android": "playerConfig",
-                "ios": "AgoraPlayerConfig",
-                "windows": "playerConfig",
-                "macos": "AgoraPlayerConfig"
+            "key": "testConfig",
+            "keyword": {
+                "android": "testConfig",
+                "ios": "AgoraTestConfig",
+                "windows": "testConfig",
+                "macos": "AgoraTestConfig"
             },
             "change_type": "create|delete|modify",
             "change_desc": "变更的总结",
@@ -128,35 +79,33 @@
             "platforms": ["ios", "windows"],
             "navtitle": "Classes",
             "shortdesc": "short description of the api",
-                "detailed_desc": [
-                    {
-                        "since": "which version introduced the api",
-                        "desc": "detailed description of the api"
-                    }
-                ],
-            "attributes": {
-                "type": "class",
-                "parameters": [
-                    {
-                        "name": "reason",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": "",
-                        "supported_platforms": ["ios", "windows"]
-                    },
-                    {
-                        "name": "state",
-                        "type": "",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": "",
-                        "supported_platforms": ["ios", "windows"]
-                    }
-                ]
-            },
+            "detailed_desc": [
+                {
+                    "since": "which version introduced the api",
+                    "desc": "detailed description of the api"
+                }
+            ],
+            "attributes": "class",
+            "parameters": [
+                {
+                    "name": "reason",
+                    "type": "",
+                    "desc": "",
+                    "change_type": "create|delete|modify",
+                    "old_value": "",
+                    "new_value": "",
+                    "supported_platforms": ["ios", "windows"]
+                },
+                {
+                    "name": "state",
+                    "type": "",
+                    "desc": "",
+                    "change_type": "create|delete|modify",
+                    "old_value": "",
+                    "new_value": "",
+                    "supported_platforms": ["ios", "windows"]
+                }
+            ],
             "old_struct_name": "",
             "need_en": "true|false",
             "extra_info": ""
@@ -183,29 +132,10 @@
     ],
     "enum_changes": [
         {
-            "enum_name": "",
-            "change_type": "create|delete|modify",
-            "desc": "",
-            "values": [
-                {
-                    "name": "",
-                    "value": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": ""
-                }
-            ],
-            "old_enum_name": "",
-            "need_en": "true|false",
-            "extra_info": ""
-        },
-        {
             "key": "SAMPLE_ENUM",
             "change_type": "create|delete|modify",
             "change_desc": "变更的总结",
-            "keyword":
-            {
+            "keyword": {
                 "android": "",
                 "ios": "",
                 "windows": "",
@@ -215,45 +145,43 @@
             "parentclass": "none",
             "platforms": ["ios", "windows"],
             "navtitle": "Enums",
-            "attributes": {
-                "type": "enum",
-                "enumerations": [
-                    {
-                        "windows": [
-                            {
-                                "alias1": "SAMPLE_ENUM_1",
-                                "value": "the prototype of windows enum1",
-                                "change_type": "create|delete|modify",
-                                "old_value": "",
-                                "new_value": ""
-                            },
-                            {
-                                "alias2": "SAMPLE_ENUM_2",
-                                "value": "the prototype of windows enum2",
-                                "change_type": "create|delete|modify",
-                                "old_value": "",
-                                "new_value": ""
-                            }
-                        ],
-                        "ios": [
-                            {
-                                "alias1": "SAMPLE_ENUM_1",
-                                "value": "AgoraSampleEnum1",
-                                "change_type": "create|delete|modify",
-                                "old_value": "",
-                                "new_value": ""
-                            },
-                            {
-                                "alias2": "SAMPLE_ENUM_2",
-                                "value": "AgoraSampleEnum2",
-                                "change_type": "create|delete|modify",
-                                "old_value": "",
-                                "new_value": ""
-                            }
-                        ]
-                    }
-                ]
-            },
+            "attributes": "enum",
+            "enumerations": [
+                {
+                    "windows": [
+                        {
+                            "alias1": "SAMPLE_ENUM_1",
+                            "value": "the prototype of windows enum1",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        },
+                        {
+                            "alias2": "SAMPLE_ENUM_2",
+                            "value": "the prototype of windows enum2",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "alias1": "SAMPLE_ENUM_1",
+                            "value": "AgoraSampleEnum1",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        },
+                        {
+                            "alias2": "SAMPLE_ENUM_2",
+                            "value": "AgoraSampleEnum2",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                }
+            ],
             "description": {
                 "shortdesc": "short description of the api",
                 "detailed_desc": [

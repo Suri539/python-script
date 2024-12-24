@@ -223,10 +223,11 @@ def create_and_insert_keydef(root, api_data, platform):
             print(f"Warning: No navtitle specified for API {api_data['key']}")
             return False
 
-        # Create a keydef for the enum itself
+        # 为枚举创建 keydef
         enum_keydef = etree.Element('keydef')
         enum_keydef.set('keys', api_data['keyword'].get(platform, api_data['key']))
-        enum_keydef.set('href', f"../API/enum_{api_data['key'].lower()}.dita")
+        # 移除 href 里面的下划线
+        enum_keydef.set('href', f"../API/enum_{api_data['key'].lower().replace('_', '')}.dita")
         enum_keydef.text = '\n' + base_indent + '    '
         enum_keydef.tail = '\n' + base_indent
 
@@ -242,21 +243,21 @@ def create_and_insert_keydef(root, api_data, platform):
         keyword.text = api_data['keyword'].get(platform, api_data['key'])
         keyword.tail = '\n' + base_indent + '        '
 
-        # Insert the enum keydef
+        #  插入枚举 keydef
         for topichead in root.iter('topichead'):
             if topichead.get('navtitle') == target_navtitle:
                 topichead.append(enum_keydef)
 
-                # Now proceed to add individual enum values after the main enum keydef
+                # 添加枚举值 keydef
                 for enum_platform, enums in api_data['description']['enumerations'].items():
                     if platform == enum_platform:
                         for enum in enums:
                             alias = enum.get('alias')
                             value = enum.get('value')
                             if alias and value:
-                                # Create a keydef for each enumeration
+                                # 为每个枚举创建 keydef
                                 enum_value_keydef = etree.Element('keydef')
-                                enum_value_keydef.set('keys', alias)  # Set keys to alias
+                                enum_value_keydef.set('keys', alias)  # 设置 keys 为 alias
                                 enum_value_keydef.text = '\n' + base_indent + '    '
                                 enum_value_keydef.tail = '\n' + base_indent
 
@@ -272,7 +273,7 @@ def create_and_insert_keydef(root, api_data, platform):
                                 keyword.text = value  # Set keyword to value
                                 keyword.tail = '\n' + base_indent + '        '
 
-                                # Insert enum value keydef
+                                # 插入枚举值 keydef
                                 topichead.append(enum_value_keydef)
 
                 return True

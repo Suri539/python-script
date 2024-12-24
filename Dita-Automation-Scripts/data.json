@@ -32,24 +32,48 @@
                 "scenarios": "use case scenarios of the api",
                 "timing": "timing of the api",
                 "restrictions": "restrictions of the api",
-                "parameters": [
-                    {
-                        "name": "option",
-                        "type": "PublishFallbackOption",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    },
-                    {
-                        "name": "option",
-                        "type": "PublishFallbackOption",
-                        "desc": "",
-                        "change_type": "create|delete|modify",
-                        "old_value": "",
-                        "new_value": ""
-                    }
-                ],
+                "parameters": {
+                    "android": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "ios": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "windows": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "macos": [
+                        {
+                            "name": "option",
+                            "type": "PublishFallbackOption",
+                            "desc": "",
+                            "change_type": "create|delete|modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
                 "return_values": {
                     "android": "return value description",
                     "ios": "return value description",
@@ -59,7 +83,10 @@
                 "old_api_name": "",
                 "old_api_signature": "",
                 "need_en": "true|false",
-                "extra_info": ""
+                "extra_info": {
+                    "remarks": "",
+                    "jira": ""
+                }
             }
         }
     ],
@@ -86,29 +113,54 @@
                 }
             ],
             "attributes": "class",
-            "parameters": [
-                {
-                    "name": "reason",
-                    "type": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": "",
-                    "supported_platforms": ["ios", "windows"]
-                },
-                {
-                    "name": "state",
-                    "type": "",
-                    "desc": "",
-                    "change_type": "create|delete|modify",
-                    "old_value": "",
-                    "new_value": "",
-                    "supported_platforms": ["ios", "windows"]
-                }
-            ],
+            "parameters": {
+                "android": [
+                    {
+                        "name": "reason",
+                        "type": "",
+                        "desc": "",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ],
+                "ios": [
+                    {
+                        "name": "reason",
+                        "type": "",
+                        "desc": "",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ],
+                "windows": [
+                    {
+                        "name": "reason",
+                        "type": "",
+                        "desc": "",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ],
+                "macos": [
+                    {
+                        "name": "reason",
+                        "type": "",
+                        "desc": "",
+                        "change_type": "create|delete|modify",
+                        "old_value": "",
+                        "new_value": ""
+                    }
+                ]
+            },
             "old_struct_name": "",
             "need_en": "true|false",
-            "extra_info": ""
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
+            }
         },
         {
             "key": "imediaplayertest",
@@ -127,7 +179,10 @@
             "attributes": "class",
             "description": "description of the interface class",
             "need_en": "true|false",
-            "extra_info": ""
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
+            }
         }
     ],
     "enum_changes": [
@@ -196,6 +251,10 @@
                         ]
                     }
                 ]
+            },
+            "extra_info": {
+                "remarks": "",
+                "jira": ""
             }
         }
     ]

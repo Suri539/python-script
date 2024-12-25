@@ -97,87 +97,131 @@ with open('data.json', 'r', encoding='utf-8') as file:
 # create_dita_files()
 
 # 遍历 data.json 中的数据
-# 找到 parameters 下 change_type 为 'modify' 且 attibutes 为 api
-# 根据现有的规则来找到对应的 api 文件并进行解析
-# 把 <section id="parameters"> 里的内容进行替换，把其中<plentry>里<pt>的值替换为对应api json里面的 new_value
-#把 <section id="parameters"> <plentry>里<pd>的值替换为对应api json里的desc
+# 找到 parameters 下 change_type 为 'modify' 且 attibutes 为 api 或 callback 的 API
+# 根据第二步中找到的 API 的 key，按照这个规则来找到 dita/RTC-NG/API 目录下的对应的 dita 文件：{attributes}_{parentclass}_{key}.dita，均为小写
+# 找到对应的 dita 文件后，找到 <section id="parameters">，在这个 section 下新增一个 plentry 元素，其中 <pt>标签里面的内容为 对应 API 的 json parameters 字段里面的 "name" 字段的值，<pd>标签里面的内容为对应 API 的 json parameters 字段里面的 "desc" 字段的值。
+# 如果一个 API 的 json parameter 下有多个 platform 的值，如果 name 字段的值一致，则 <pt> 标签上增加一个 props 属性，值为 platform 的值（windows 对应的值为 cpp），如果 name 字段的值不一致，则 <pt> 标签上增加一个 props 属性，值为 platform 的值（windows 对应的值为 cpp）。
+# 保存修改后的文件
 
 def modify_dita_files():
-    """Modify DITA files based on JSON data."""
+    """根据 JSON 数据修改 DITA 文件，同时保持原有格式和缩进一致。"""
     api_dir = os.path.join(base_dir, 'RTC-NG', 'API')
 
+    # 遍历 data.json 中的数据
     for change_type in ['api_changes', 'struct_changes', 'enum_changes']:
-        for api_data in json_data.get(change_type, []):
-            if api_data.get('change_type') != 'modify':
-                continue
+        for item in json_data.get(change_type, []):
+            # 只处理 modify 类型且 attributes 为 api 或 callback 的 API
+            if item['change_type'] == 'modify' and item['attributes'] in ['api', 'callback']:
+                # 构建 DITA 文件路径
+                filename = f"{item['attributes']}_{item['parentclass']}_{item['key']}.dita".lower()
+                dita_path = os.path.join(api_dir, filename)
 
-            attributes = api_data.get('attributes', '')
-            parentclass = api_data.get('parentclass', '').lower()
-            key = api_data['key'].lower()
-            dita_file_path = None
+                if not os.path.exists(dita_path):
+                    print(f"文件未找到: {dita_path}")
+                    continue
 
-            # Construct the file name based on attributes and parentclass
-            if attributes in ['api', 'callback']:
-                file_name_pattern = f"{attributes}_{parentclass}_{key}.dita"
-            else:
-                file_name_pattern = key  # Default pattern if not api or callback
-
-            # Search for the file that matches the constructed pattern
-            for file_name in os.listdir(api_dir):
-                if file_name.endswith('.dita') and file_name_pattern in file_name:
-                    dita_file_path = os.path.join(api_dir, file_name)
-                    break
-
-            if not dita_file_path:
-                print(f"Error: DITA file not found for key {key}")
-                continue
-
-            try:
-                tree = etree.parse(dita_file_path)
+                # 解析 DITA 文件
+                parser = etree.XMLParser(remove_blank_text=False)
+                tree = etree.parse(dita_path, parser)
                 root = tree.getroot()
 
-                # Replace <ph id="shortdesc">
-                shortdesc = api_data['description'].get('shortdesc', '')
-                ph_element = root.find(".//ph[@id='shortdesc']")
-                if ph_element is not None:
-                    ph_element.clear()
-                    ph_element.text = shortdesc
+                # 找到 parameters section
+                params_section = root.find(".//section[@id='parameters']")
+                if params_section is None:
+                    print(f"在 {dita_path} 中未找到 parameters section")
+                    continue
 
-                # Replace <section id="detailed_desc">
-                detailed_desc = api_data['description'].get('detailed_desc', [])
-                detailed_desc_text = ''.join([desc['desc'] for desc in detailed_desc])
-                detailed_desc_element = root.find(".//section[@id='detailed_desc']/p")
-                if detailed_desc_element is not None:
-                    detailed_desc_element.clear()
-                    detailed_desc_element.text = detailed_desc_text
+                # 找到 <parml> 元素
+                parml = params_section.find("parml")
 
-                # Replace <section id="scenario">
-                scenario = api_data['description'].get('scenarios', '')
-                scenario_element = root.find(".//section[@id='scenario']/p")
-                if scenario_element is not None:
-                    scenario_element.clear()
-                    scenario_element.text = scenario
+                if parml is not None:
+                    # 获取 <parml> 内现有 plentry 的缩进
+                    existing_plentries = parml.findall('plentry')
+                    if existing_plentries:
+                        last_plentry = existing_plentries[-1]
+                        # 获取最后一个 plentry 的 tail (换行 + 缩进)
+                        indent = last_plentry.tail if last_plentry.tail else '\n        '
+                        # 获取子元素的缩进（假设子元素比 plentry 多 4 个空格）
+                        child_indent = ' ' * (len(indent) + 4)
+                    else:
+                        # 默认缩进
+                        indent = '\n        '
+                        child_indent = indent + '    '
 
-                # Replace <section id="timing">
-                timing = api_data['description'].get('timing', '')
-                timing_element = root.find(".//section[@id='timing']/p")
-                if timing_element is not None:
-                    timing_element.clear()
-                    timing_element.text = timing
+                    target_parent = parml
+                else:
+                    # 如果没有 <parml>，则直接在 section 下添加 plentry
+                    existing_plentries = params_section.findall('plentry')
+                    if existing_plentries:
+                        last_plentry = existing_plentries[-1]
+                        indent = last_plentry.tail if last_plentry.tail else '\n        '
+                        child_indent = ' ' * (len(indent) + 4)
+                    else:
+                        # 默认缩进
+                        indent = '\n        '
+                        child_indent = indent + '    '
 
-                # Replace <section id="restriction">
-                restrictions = api_data['description'].get('restrictions', '')
-                restriction_element = root.find(".//section[@id='restriction']/p")
-                if restriction_element is not None:
-                    restriction_element.clear()
-                    restriction_element.text = restrictions
+                    target_parent = params_section
 
-                # Save changes back to the file
-                tree.write(dita_file_path, encoding='UTF-8', xml_declaration=True)
-                print(f"Modified DITA file: {dita_file_path}")
+                # 处理参数
+                if 'parameters' in item['description']:
+                    params = item['description']['parameters']
 
-            except Exception as e:
-                print(f"Error modifying DITA file {dita_file_path}: {str(e)}")
+                    # 按参数名组织数据
+                    param_data = {}
+                    for platform, param_list in params.items():
+                        for param in param_list:
+                            name = param['name']
+                            if name not in param_data:
+                                param_data[name] = {
+                                    'platforms': [],
+                                    'desc': param.get('desc', ''),  # 保存第一个遇到的描述
+                                    'platform_names': {}  # 存储每个平台对应的参数名
+                                }
+                            param_data[name]['platforms'].append(platform)
+                            param_data[name]['platform_names'][platform] = name
+
+                    # 为每个唯一参数创建 plentry
+                    for param_name, data in param_data.items():
+                        # 检查是否已存在相同的参数
+                        exists = False
+                        for existing_pt in params_section.findall(".//pt"):
+                            if existing_pt.text == param_name:
+                                exists = True
+                                break
+
+                        if exists:
+                            continue
+
+                        # 创建新的 plentry 结构
+                        plentry = etree.SubElement(target_parent, 'plentry')
+                        plentry.tail = indent  # 设置 plentry 的 tail 以保持缩进
+
+                        # 设置 plentry 的 text 为换行加缩进
+                        plentry.text = '\n' + child_indent
+
+                        pt = etree.SubElement(plentry, 'pt')
+                        # 设置 <pt> 的 text 和换行缩进
+                        pt.text = param_name
+                        pt.tail = '\n' + child_indent
+
+                        pd = etree.SubElement(plentry, 'pd')
+                        pd.text = data['desc']
+                        # 修改这一行，移除换行符
+                        pd.tail = indent  # 设置 <pd> 的 tail 为 plentry 的缩进，让 </plentry> 直接跟随
+
+                        # 设置平台属性
+                        if data['platforms']:
+                            platform_values = []
+                            for platform in data['platforms']:
+                                # windows 对应的值为 cpp
+                                platform_value = 'cpp' if platform == 'windows' else platform
+                                platform_values.append(platform_value)
+                            pt.set('props', ' '.join(platform_values))
+
+                # 保存修改后的文件
+                tree.write(dita_path, encoding='utf-8', xml_declaration=True, pretty_print=False)
+                print(f"Successfully updated {dita_path}")
 
 modify_dita_files()
 

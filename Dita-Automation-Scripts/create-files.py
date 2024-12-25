@@ -5,15 +5,21 @@ import os
 
 def create_dita_file(template_path, new_file_path):
     """创建新的 dita 文件"""
+    # 检查文件是否已存在
+    if os.path.exists(new_file_path):
+        print(f"警告：文件已存在，跳过创建：{new_file_path}")
+        return False
+        
     try:
         with open(template_path, 'r', encoding='utf-8') as f:
             content = f.read()
-            print(f"模板文件内容前100个字符：{content[:100]}")
         with open(new_file_path, 'w', encoding='utf-8') as f:
             f.write(content)
             print(f"成功创建文件：{new_file_path}")
+        return True
     except Exception as e:
         print(f"创建文件时出错：{str(e)}")
+        return False
 
 def get_platform_prop(platform, platform_configs):
     """根据平台获取对应的 platform3 值"""
@@ -139,11 +145,11 @@ def process_api_change(change_item, templates, platform_configs):
     prefix = 'callback' if is_callback else 'api'
     
     file_name = f"{prefix}_{change_item['parentclass']}_{change_item['key']}.dita".lower()
-    # 使用 os.path.join 来构建完整的文件路径
     full_file_path = os.path.join(new_file_path, file_name)
     
-    # 创建文件
-    create_dita_file(template_path, full_file_path)
+    # 创建文件，如果文件已存在则返回
+    if not create_dita_file(template_path, full_file_path):
+        return
     
     # 解析并更新文件
     tree = etree.parse(full_file_path)
@@ -319,12 +325,11 @@ def process_enum_change(change_item, templates, platform_configs):
     # 处理文件名：删除连字符并转换为小写
     enum_key = change_item['key'].replace('-', '').lower()
     file_name = f"enum_{enum_key}.dita"
-    
-    # 使用 os.path.join 来构建完整的文件路径
     full_file_path = os.path.join(new_file_path, file_name)
     
-    # 创建文件
-    create_dita_file(templates['enum'], full_file_path)
+    # 创建文件，如果文件已存在则返回
+    if not create_dita_file(templates['enum'], full_file_path):
+        return
     
     # 解析并更新文件
     tree = etree.parse(full_file_path)
@@ -462,12 +467,11 @@ def process_class_change(change_item, templates, platform_configs):
     # 处理文件名
     class_key = change_item['key'].lower()
     file_name = f"class_{class_key}.dita"
-    
-    # 使用 os.path.join 来构建完整的文件路径
     full_file_path = os.path.join(new_file_path, file_name)
     
-    # 创建文件
-    create_dita_file(templates['class'], full_file_path)
+    # 创建文件，如果文件已存在则返回
+    if not create_dita_file(templates['class'], full_file_path):
+        return
     
     # 解析并更新文件
     tree = etree.parse(full_file_path)
@@ -561,20 +565,28 @@ def main(platform_configs, new_file_path):
     
     # 处理所有类型的变更
     if 'api_changes' in changes:
+        print("\n开始处理 API 变更...")
         for change in changes['api_changes']:
-            process_api_change(change, templates, platform_configs)
+            try:
+                process_api_change(change, templates, platform_configs)
+            except Exception as e:
+                print(f"处理 API {change.get('key', '未知')} 时出错：{str(e)}")
     
     if 'enum_changes' in changes:
-        print(f"找到 {len(changes['enum_changes'])} 个枚举变更")
+        print("\n开始处理枚举变更...")
         for change in changes['enum_changes']:
-            process_enum_change(change, templates, platform_configs)
-            print(f"处理枚举 {change.get('key', '未知')} 的变更")
+            try:
+                process_enum_change(change, templates, platform_configs)
+            except Exception as e:
+                print(f"处理枚举 {change.get('key', '未知')} 时出错：{str(e)}")
     
     if 'struct_changes' in changes:
-        print(f"找到 {len(changes['struct_changes'])} 个类变更")
+        print("\n开始处理类变更...")
         for change in changes['struct_changes']:
-            process_class_change(change, templates, platform_configs)
-            print(f"处理类 {change.get('key', '未知')} 的变更")
+            try:
+                process_class_change(change, templates, platform_configs)
+            except Exception as e:
+                print(f"处理类 {change.get('key', '未知')} 时出错：{str(e)}")
 
 # 添加到主程序中的调用
 if __name__ == "__main__":

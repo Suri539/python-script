@@ -110,10 +110,17 @@ def modify_dita_files():
     # 遍历 data.json 中的数据
     for change_type in ['api_changes', 'struct_changes', 'enum_changes']:
         for item in json_data.get(change_type, []):
-            # 只处理 modify 类型且 attributes 为 api 或 callback 的 API
-            if item['change_type'] == 'modify' and item['attributes'] in ['api', 'callback']:
-                # 构建 DITA 文件路径
-                filename = f"{item['attributes']}_{item['parentclass']}_{item['key']}.dita".lower()
+            # 只处理 modify 类型且 attributes 为 api、callback、enum 或 class 的 API
+            if item['change_type'] == 'modify' and item['attributes'] in ['api', 'callback', 'enum', 'class']:
+                # 根据 attributes 类型构建 DITA 文件路径
+                if item['attributes'] in ['api', 'callback']:
+                    filename = f"{item['attributes']}_{item['parentclass']}_{item['key']}.dita".lower()
+                elif item['attributes'] in ['enum', 'class']:
+                    filename = f"{item['attributes']}_{item['key'].replace('_', '')}.dita".lower()
+                else:
+                    print(f"Unsupported attribute type: {item['attributes']}")
+                    continue
+
                 dita_path = os.path.join(api_dir, filename)
 
                 if not os.path.exists(dita_path):
@@ -215,7 +222,64 @@ def modify_dita_files():
                             platform_values = []
                             for platform in data['platforms']:
                                 # windows 对应的值为 cpp
-                                platform_value = 'cpp' if platform == 'windows' else platform
+                                platform_value = 'cpp' if platform == 'windows' else PLATFORM_TO_KEYSMAP.get(platform, platform)
+                                platform_values.append(platform_value)
+                            pt.set('props', ' '.join(platform_values))
+
+                # 处理 enums
+                if item['attributes'] == 'enum' and 'enumerations' in item['description']:
+                    enumerations = item['description']['enumerations']
+
+                    # 按 alias 组织数据
+                    enum_data = {}
+                    for platform, enum_list in enumerations.items():
+                        for enum in enum_list:
+                            alias = enum['alias']
+                            desc = enum.get('desc', '')
+                            if alias not in enum_data:
+                                enum_data[alias] = {
+                                    'platforms': [],
+                                    'desc': desc
+                                }
+                            enum_data[alias]['platforms'].append(platform)
+
+                    # 为每个唯一枚举创建 plentry
+                    for alias, data in enum_data.items():
+                        # 检查是否已存在相同的枚举
+                        exists = False
+                        for existing_pt in params_section.findall(".//pt"):
+                            if existing_pt.find('ph') is not None and existing_pt.find('ph').get('keyref') == alias:
+                                exists = True
+                                break
+
+                        if exists:
+                            continue
+
+                        # 创建新的 plentry 结构
+                        plentry = etree.SubElement(target_parent, 'plentry')
+                        plentry.tail = indent  # 设置 plentry 的 tail 以保持缩进
+
+                        # 设置 plentry 的 text 为换行加缩进
+                        plentry.text = '\n' + child_indent
+
+                        pt = etree.SubElement(plentry, 'pt')
+                        # 创建 <ph> 元素并设置 keyref
+                        ph = etree.SubElement(pt, 'ph')
+                        ph.set('keyref', alias)
+                        # 设置 <pt> 的 tail
+                        pt.tail = '\n' + child_indent
+
+                        pd = etree.SubElement(plentry, 'pd')
+                        pd.text = data['desc']
+                        # 设置 <pd> 的 tail 为 plentry 的缩进
+                        pd.tail = indent
+
+                        # 设置平台属性
+                        if data['platforms']:
+                            platform_values = []
+                            for platform in data['platforms']:
+                                # windows 对应的值为 cpp
+                                platform_value = 'cpp' if platform == 'windows' else PLATFORM_TO_KEYSMAP.get(platform, platform)
                                 platform_values.append(platform_value)
                             pt.set('props', ' '.join(platform_values))
 

@@ -3,6 +3,7 @@ from lxml import etree
 import json
 import os
 import shutil
+import re
 
 PLATFORM_FILES = {
     "android": "RTC_NG_API_Android.ditamap",
@@ -45,8 +46,19 @@ def create_dita_files():
     template_dir = os.path.join(base_dir, 'templates-cn', 'RTC')
     target_dir = os.path.join(base_dir, 'RTC-NG', 'API')
 
+    # 初始化成功和错误信息列表
+    success_messages = []
+    error_messages = []
+
     # 确保目标目录存在
-    os.makedirs(target_dir, exist_ok=True)
+    try:
+        os.makedirs(target_dir, exist_ok=True)
+        success_messages.append(f"Ensured target directory exists: {target_dir}")
+    except Exception as e:
+        error_messages.append(f"Error creating target directory {target_dir}: {str(e)}")
+        print("\n".join(success_messages))
+        print("\n".join(error_messages))
+        return
 
     # 遍历 data.json 文件中的每个 API
     for change_type in ['api_changes', 'struct_changes', 'enum_changes']:
@@ -74,7 +86,7 @@ def create_dita_files():
                     template_file = os.path.join(template_dir, 'Callback.dita')
                     output_filename = f'callback_{key}.dita'
                 else:
-                    print(f"Warning: Unknown attributes type '{attributes}' for API {api_data['key']}")
+                    error_messages.append(f"Warning: Unknown attributes type '{attributes}' for API {api_data['key']}")
                     continue
 
             # 构建目标文件路径
@@ -82,26 +94,262 @@ def create_dita_files():
 
             # 如果目标文件已存在，跳过
             if os.path.exists(output_path):
-                print(f"Skipping existing file: {output_filename}")
+                success_messages.append(f"Skipping existing file: {output_filename}")
                 continue
 
             try:
                 # 复制模板文件到目标位置
                 shutil.copy2(template_file, output_path)
-                print(f"Created {output_filename}")
+                success_messages.append(f"Created {output_filename}")
             except FileNotFoundError:
-                print(f"Error: Template file not found: {template_file}")
+                error_messages.append(f"Error: Template file not found: {template_file}")
             except Exception as e:
-                print(f"Error creating {output_filename}: {str(e)}")
+                error_messages.append(f"Error creating {output_filename}: {str(e)}")
 
+    # 打印成功和错误信息
+    if success_messages:
+        print("=== 创建 DITA 文件成功信息 ===")
+        print("\n".join(success_messages))
+    if error_messages:
+        print("\n=== 创建 DITA 文件错误信息 ===")
+        print("\n".join(error_messages))
+
+def modify_dita_files():
+    """根据 JSON 数据修改 DITA 文件，同时保持原有格式和缩进一致。"""
+    api_dir = os.path.join(base_dir, 'RTC-NG', 'API')
+
+    # 初始化成功和错误信息列表
+    success_messages = []
+    error_messages = []
+
+    # 遍历 data.json 中的数据
+    for change_type in ['api_changes', 'struct_changes', 'enum_changes']:
+        for item in json_data.get(change_type, []):
+            # 只处理 modify 类型且 attributes 为 api、callback、enum 或 class 的 API
+            if item['change_type'] == 'modify' and item['attributes'] in ['api', 'callback', 'enum', 'class']:
+                # 根据 attributes 类型构建 DITA 文件路径
+                if item['attributes'] in ['api', 'callback']:
+                    filename = f"{item['attributes']}_{item['parentclass']}_{item['key']}.dita".lower()
+                elif item['attributes'] in ['enum', 'class']:
+                    filename = f"{item['attributes']}_{item['key'].replace('_', '')}.dita".lower()
+                else:
+                    error_messages.append(f"Unsupported attribute type: {item['attributes']}")
+                    continue
+
+                dita_path = os.path.join(api_dir, filename)
+
+                if not os.path.exists(dita_path):
+                    error_messages.append(f"文件未找到: {dita_path}")
+                    continue
+
+                # 读取原始文件内容
+                try:
+                    with open(dita_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                except Exception as e:
+                    error_messages.append(f"Error reading {dita_path}: {str(e)}")
+                    continue
+
+                # 使用正则表达式提取 <section id="parameters">
+                pattern = re.compile(r'(<section\s+id="parameters">.*?</section>)', re.DOTALL)
+                match = pattern.search(content)
+                if not match:
+                    error_messages.append(f"在 {dita_path} 中未找到 parameters section")
+                    continue
+
+                parameters_section = match.group(1)
+
+                # 解析 parameters_section
+                parser = etree.XMLParser(remove_blank_text=False, resolve_entities=False)
+                try:
+                    parameters_tree = etree.fromstring(parameters_section, parser)
+                except etree.XMLSyntaxError as e:
+                    error_messages.append(f"解析 {dita_path} 中的 parameters section 时出错: {e}")
+                    continue
+
+                # 找到 <parml>
+                parml = parameters_tree.find("parml")
+
+                if parml is not None:
+                    # 获取 <parml> 内现有 plentry 的缩进
+                    existing_plentries = parml.findall('plentry')
+                    if existing_plentries:
+                        last_plentry = existing_plentries[-1]
+                        indent = last_plentry.tail if last_plentry.tail else '\n        '
+                        child_indent = ' ' * (len(indent) + 4)
+                    else:
+                        # 默认缩进
+                        indent = '\n        '
+                        child_indent = indent + '    '
+
+                    target_parent = parml
+                else:
+                    # 如果没有 <parml>，则直接在 section 下添加 plentry
+                    existing_plentries = parameters_tree.findall('plentry')
+                    if existing_plentries:
+                        last_plentry = existing_plentries[-1]
+                        indent = last_plentry.tail if last_plentry.tail else '\n        '
+                        child_indent = ' ' * (len(indent) + 4)
+                    else:
+                        # 默认缩进
+                        indent = '\n        '
+                        child_indent = indent + '    '
+
+                    target_parent = parameters_tree
+
+                # 处理参数
+                params = item['description'].get('parameters', {})
+                if 'parameters' in item['description']:
+                    params = item['description']['parameters']
+
+                    # 按参数名组织数据
+                    param_data = {}
+                    for platform, param_list in params.items():
+                        for param in param_list:
+                            name = param['name']
+                            if name not in param_data:
+                                param_data[name] = {
+                                    'platforms': [],
+                                    'desc': param.get('desc', ''),  # 保存第一个遇到的描述
+                                    'platform_names': {}  # 存储每个平台对应的参数名
+                                }
+                            param_data[name]['platforms'].append(platform)
+                            param_data[name]['platform_names'][platform] = name
+
+                    # 为每个唯一参数创建 plentry
+                    for param_name, data in param_data.items():
+                        # 检查是否已存在相同的参数
+                        exists = False
+                        for existing_pt in parameters_tree.findall(".//pt"):
+                            if existing_pt.text == param_name:
+                                exists = True
+                                break
+
+                        if exists:
+                            continue
+
+                        # 创建新的 plentry 结构
+                        plentry = etree.SubElement(target_parent, 'plentry')
+                        plentry.tail = indent  # 设置 plentry 的 tail 以保持缩进
+
+                        # 设置 plentry 的 text 为换行加缩进
+                        plentry.text = '\n' + child_indent
+
+                        pt = etree.SubElement(plentry, 'pt')
+                        # 设置 <pt> 的 text 和换行缩进
+                        pt.text = param_name
+                        pt.tail = '\n' + child_indent
+
+                        pd = etree.SubElement(plentry, 'pd')
+                        pd.text = data['desc']
+                        # 移除换行符
+                        pd.tail = indent  # 设置 <pd> 的 tail 为 plentry 的缩进，让 </plentry> 直接跟随
+
+                        # 设置平台属性
+                        if data['platforms']:
+                            platform_values = []
+                            for platform in data['platforms']:
+                                # windows 对应的值为 cpp
+                                platform_value = 'cpp' if platform == 'windows' else PLATFORM_TO_KEYSMAP.get(platform, platform)
+                                platform_values.append(platform_value)
+                            pt.set('props', ' '.join(platform_values))
+
+                # 处理 enums
+                if item['attributes'] == 'enum' and 'enumerations' in item['description']:
+                    enumerations = item['description']['enumerations']
+
+                    # 按 alias 组织数据
+                    enum_data = {}
+                    for platform, enum_list in enumerations.items():
+                        for enum in enum_list:
+                            alias = enum['alias']
+                            desc = enum.get('desc', '')
+                            if alias not in enum_data:
+                                enum_data[alias] = {
+                                    'platforms': [],
+                                    'desc': desc
+                                }
+                            enum_data[alias]['platforms'].append(platform)
+
+                    # 为每个唯一枚举创建 plentry
+                    for alias, data in enum_data.items():
+                        # 检查是否已存在相同的枚举
+                        exists = False
+                        for existing_pt in parameters_tree.findall(".//pt"):
+                            ph = existing_pt.find('ph')
+                            if ph is not None and ph.get('keyref') == alias:
+                                exists = True
+                                break
+
+                        if exists:
+                            continue
+
+                        # 创建新的 plentry 结构
+                        plentry = etree.SubElement(target_parent, 'plentry')
+                        plentry.tail = indent  # 设置 plentry 的 tail 以保持缩进
+
+                        # 设置 plentry 的 text 为换行加缩进
+                        plentry.text = '\n' + child_indent
+
+                        pt = etree.SubElement(plentry, 'pt')
+                        # 创建 <ph> 元素并设置 keyref
+                        ph = etree.SubElement(pt, 'ph')
+                        ph.set('keyref', alias)
+                        # 设置 <pt> 的 tail
+                        pt.tail = '\n' + child_indent
+
+                        pd = etree.SubElement(plentry, 'pd')
+                        pd.text = data['desc']
+                        # 设置 <pd> 的 tail 为 plentry 的缩进
+                        pd.tail = indent
+
+                        # 设置平台属性
+                        if data['platforms']:
+                            platform_values = []
+                            for platform in data['platforms']:
+                                # windows 对应的值为 cpp
+                                platform_value = 'cpp' if platform == 'windows' else PLATFORM_TO_KEYSMAP.get(platform, platform)
+                                platform_values.append(platform_value)
+                            pt.set('props', ' '.join(platform_values))
+
+                # 序列化修改后的 parameters_section
+                modified_parameters = etree.tostring(parameters_tree, encoding='unicode', pretty_print=False)
+
+                # 替换原始的 parameters_section 为修改后的部分
+                new_content = pattern.sub(modified_parameters, content)
+
+                # 写回修改后的内容到文件
+                try:
+                    with open(dita_path, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+                    success_messages.append(f"Successfully updated {dita_path}")
+                except Exception as e:
+                    error_messages.append(f"Error writing to {dita_path}: {str(e)}")
+
+    # 打印成功和错误信息
+    if success_messages:
+        print("=== 修改 DITA 文件成功信息 ===")
+        print("\n".join(success_messages))
+    if error_messages:
+        print("\n=== 修改 DITA 文件错误信息 ===")
+        print("\n".join(error_messages))
 
 def parse_ditamap(ditamap_path, platform_apis):
     """处理单个 ditamap 文件"""
+    success_messages = []
+    error_messages = []
+
     print(f"\nProcessing ditamap: {ditamap_path}")
     print(f"Total APIs to process: {len(platform_apis)}")
 
-    tree = etree.parse(ditamap_path)
-    root = tree.getroot()
+    try:
+        tree = etree.parse(ditamap_path)
+        root = tree.getroot()
+    except Exception as e:
+        error_messages.append(f"Error parsing ditamap {ditamap_path}: {str(e)}")
+        print("\n".join(error_messages))
+        return
+
     changes_made = 0
 
     # 记录需要重新排序的 topicref父元素
@@ -113,7 +361,7 @@ def parse_ditamap(ditamap_path, platform_apis):
         # 跳过 attributes 为 enum 的 API
         if (api_data.get('attributes') == 'class' and api_data.get('navtitle') != 'Interface classes') or \
            api_data.get('attributes') == 'enum':
-            print(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
+            success_messages.append(f"Skipping API with key '{api_data['key']}' due to attributes '{api_data['attributes']}' and navtitle '{api_data.get('navtitle', '')}'")
             continue
 
         target_href = api_data['toc_href']
@@ -140,7 +388,7 @@ def parse_ditamap(ditamap_path, platform_apis):
 
                 topicref.append(new_topicref)
                 changes_made += 1
-                print(f"Added new topicref with keyref='{api_key}' under {target_href}")
+                success_messages.append(f"Added new topicref with keyref='{api_key}' under {target_href}")
 
                 # 将修改过的父元素添加到集合中
                 modified_parents.add(topicref)
@@ -166,14 +414,29 @@ def parse_ditamap(ditamap_path, platform_apis):
 
     # 如果有修改，写入文件
     if changes_made > 0:
-        print(f"\nWriting {changes_made} changes to {ditamap_path}")
-        tree.write(ditamap_path, encoding='UTF-8', xml_declaration=True)
+        try:
+            tree.write(ditamap_path, encoding='UTF-8', xml_declaration=True)
+            success_messages.append(f"Writing {changes_made} changes to {ditamap_path}")
+        except Exception as e:
+            error_messages.append(f"Error writing to ditamap {ditamap_path}: {str(e)}")
     else:
-        print(f"\nNo changes made to {ditamap_path}")
+        success_messages.append(f"No changes made to {ditamap_path}")
+
+    # 打印成功和错误信息
+    if success_messages:
+        print("=== 处理 ditamap 成功信息 ===")
+        print("\n".join(success_messages))
+    if error_messages:
+        print("\n=== 处理 ditamap 错误信息 ===")
+        print("\n".join(error_messages))
 
 def process_all_ditamaps():
     """处理所有平台的 ditamap 文件"""
     ditamap_base_dir = os.path.join(base_dir, 'RTC-NG')
+
+    # 初始化成功和错误信息列表
+    success_messages = []
+    error_messages = []
 
     # 首先按平台组织 API 数据
     platform_api_map = {platform: [] for platform in PLATFORM_FILES.keys()}
@@ -193,23 +456,43 @@ def process_all_ditamaps():
                     if platform in platform_api_map:
                         platform_api_map[platform].append(api_data)
 
-    # 处理每个平台的 ditamap 文件
+    # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
+    keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')
+
+    # 遍历每个平台
     for platform, apis in platform_api_map.items():
-        if platform in PLATFORM_FILES:
-            ditamap_path = os.path.join(ditamap_base_dir, PLATFORM_FILES[platform])
-            if os.path.exists(ditamap_path):
-                parse_ditamap(ditamap_path, apis)
-            else:
-                print(f"Warning: Ditamap file not found for platform {platform}: {ditamap_path}")
-        else:
-            print(f"Warning: No ditamap file mapping for platform {platform}")
+        keysmap_platform = PLATFORM_TO_KEYSMAP.get(platform)
+        if not keysmap_platform:
+            error_messages.append(f"Warning: No keysmap mapping found for platform {platform}")
+            continue
+
+        ditamap_path = os.path.join(ditamap_base_dir, PLATFORM_FILES.get(platform, ''))
+        if not os.path.exists(ditamap_path):
+            error_messages.append(f"Warning: Ditamap file not found for platform {platform}: {ditamap_path}")
+            continue
+
+        # 处理该平台的 ditamap
+        parse_ditamap(ditamap_path, apis)
+        success_messages.append(f"Processed ditamap for platform {platform}")
+
+    # 打印成功和错误信息
+    if success_messages:
+        print("\n=== 处理所有 ditamap 成功信息 ===")
+        print("\n".join(success_messages))
+    if error_messages:
+        print("\n=== 处理所有 ditamap 错误信息 ===")
+        print("\n".join(error_messages))
 
 def create_and_insert_keydef(root, api_data, platform):
     """创建并插入新的 keydef 元素"""
+    success_messages = []
+    error_messages = []
+
     # 获取第一个 topichead 下的第一个 keydef 作为参考
     reference_keydef = root.find('.//topichead/keydef')
     if reference_keydef is None:
-        print("Warning: No reference keydef found for indentation")
+        error_messages.append("Warning: No reference keydef found for indentation")
+        print("\n".join(error_messages))
         return False
 
     # 获取基础缩进（keydef 元素的缩进）
@@ -220,7 +503,8 @@ def create_and_insert_keydef(root, api_data, platform):
         # 插入 enum keydef
         target_navtitle = api_data.get('navtitle')
         if not target_navtitle:
-            print(f"Warning: No navtitle specified for API {api_data['key']}")
+            error_messages.append(f"Warning: No navtitle specified for API {api_data['key']}")
+            print("\n".join(error_messages))
             return False
 
         # 为枚举创建 keydef
@@ -243,10 +527,11 @@ def create_and_insert_keydef(root, api_data, platform):
         keyword.text = api_data['keyword'].get(platform, api_data['key'])
         keyword.tail = '\n' + base_indent + '        '
 
-        #  插入枚举 keydef
+        # 插入枚举 keydef
         for topichead in root.iter('topichead'):
             if topichead.get('navtitle') == target_navtitle:
                 topichead.append(enum_keydef)
+                success_messages.append(f"Added enum keydef for API {api_data['key']} to navtitle '{target_navtitle}'")
 
                 # 添加枚举值 keydef
                 for enum_platform, enums in api_data['description']['enumerations'].items():
@@ -275,10 +560,13 @@ def create_and_insert_keydef(root, api_data, platform):
 
                                 # 插入枚举值 keydef
                                 topichead.append(enum_value_keydef)
+                                success_messages.append(f"Added enum value keydef '{alias}' with value '{value}'")
 
+                print("\n".join(success_messages))
                 return True
 
-        print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+        error_messages.append(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+        print("\n".join(error_messages))
         return False
 
     # 处理非 enum 类型的 keydef
@@ -324,21 +612,31 @@ def create_and_insert_keydef(root, api_data, platform):
     # 查找目标 topichead 并插入
     target_navtitle = api_data.get('navtitle')
     if not target_navtitle:
-        print(f"Warning: No navtitle specified for API {api_data['key']}")
+        error_messages.append(f"Warning: No navtitle specified for API {api_data['key']}")
+        print("\n".join(error_messages))
         return False
 
     for topichead in root.iter('topichead'):
         if topichead.get('navtitle') == target_navtitle:
             # 检查是否已存在相同的 keydef
+            exists = False
             for existing_keydef in topichead.findall('keydef'):
                 if existing_keydef.get('keys') == api_data['key']:
-                    print(f"Warning: Keydef with key '{api_data['key']}' already exists in {target_navtitle}")
-                    return False
+                    exists = True
+                    break
+            if exists:
+                error_messages.append(f"Warning: Keydef with key '{api_data['key']}' already exists in {target_navtitle}")
+                print("\n".join(error_messages))
+                return False
+
             # 添加元素
             topichead.append(new_keydef)
+            success_messages.append(f"Added keydef for API {api_data['key']} to navtitle '{target_navtitle}'")
+            print("\n".join(success_messages))
             return True
 
-    print(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+    error_messages.append(f"Warning: No matching topichead found for navtitle '{target_navtitle}'")
+    print("\n".join(error_messages))
     return False
 
 def parse_keysmaps():
@@ -373,18 +671,22 @@ def parse_keysmaps():
     # 解析 RTC-NG/config 路径下所有的 keys-rtc-ng-api-{platform}.ditamap 文件
     keysmaps_dir = os.path.join(base_dir, 'RTC-NG','config')
 
+    # 初始化成功和错误信息列表
+    success_messages = []
+    error_messages = []
+
     # 遍历每个平台
     for json_platform, keysmap_platform in PLATFORM_TO_KEYSMAP.items():
         keysmap_file = os.path.join(keysmaps_dir, f'keys-rtc-ng-api-{keysmap_platform}.ditamap')
         if not os.path.exists(keysmap_file):
-            print(f"Warning: Keymap file not found: {keysmap_file}")
+            error_messages.append(f"Warning: Keymap file not found: {keysmap_file}")
             continue
 
         print(f"\nProcessing keymap for platform: {json_platform}")
 
         # 检查该平台是否有需要处理的API
         if not platform_apis[json_platform]:
-            print(f"No APIs to process for platform {json_platform}")
+            success_messages.append(f"No APIs to process for platform {json_platform}")
             continue
 
         tree = etree.parse(keysmap_file)
@@ -395,15 +697,25 @@ def parse_keysmaps():
         for api_data in platform_apis[json_platform]:
             if create_and_insert_keydef(root, api_data, json_platform):
                 changes_made += 1
-                print(f"Added keydef for API {api_data['key']} to {json_platform}")
+                success_messages.append(f"Added keydef for API {api_data['key']} to {json_platform}")
 
         # 如果有修改，保存文件
         if changes_made > 0:
-            print(f"Writing {changes_made} changes to {keysmap_file}")
-            tree.write(keysmap_file, encoding='UTF-8', xml_declaration=True)
+            try:
+                tree.write(keysmap_file, encoding='UTF-8', xml_declaration=True)
+                success_messages.append(f"Writing {changes_made} changes to {keysmap_file}")
+            except Exception as e:
+                error_messages.append(f"Error writing to keymap {keysmap_file}: {str(e)}")
         else:
-            print(f"No changes made to {keysmap_file}")
-parse_keysmaps()
+            success_messages.append(f"No changes made to {keysmap_file}")
+
+    # 打印成功和错误信息
+    if success_messages:
+        print("\n=== 处理 keysmaps 成功信息 ===")
+        print("\n".join(success_messages))
+    if error_messages:
+        print("\n=== 处理 keysmaps 错误信息 ===")
+        print("\n".join(error_messages))
 
 def insert_relations(relations_path):
     """处理 relations 文件，插入 API 关系"""
@@ -620,6 +932,7 @@ def main(platform_configs):
     parse_keysmaps()
     insert_relations(relations_path)
     insert_datatype(datatype_path)
+    modify_dita_files()
 
 # 添加到主程序中的调用
 if __name__ == "__main__":

@@ -20,5 +20,6 @@
                     <pd><?oxy-placeholder content="The description of the enumerator."?></pd>
                 </plentry>
             </parml>
-        </section></refbody>
+        </section>
+    </refbody>
 </reference>

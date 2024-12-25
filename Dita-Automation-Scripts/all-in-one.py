@@ -31,7 +31,7 @@ PLATFORM_TO_KEYSMAP = {
 }
 
 # 获取基础目录路径
-base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/dita'
+base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -417,102 +417,105 @@ def insert_relations(relations_path):
     # 创建平台映射字典
     platform_map = {config['platform']: config['platform1'] for config in platform_configs}
 
-    # 遍历所有 API 数据
-    for api_key, api_data in json_data.items():
-        # 检查是否需要处理该 API
-        if api_data.get('attributes') not in ['api', 'callback']:
+    # 遍历所有类型的变更
+    for change_type in ['api_changes']:
+        # struct_changes 和 enum_changes 不需要处理 relations
+        if change_type not in json_data:
             continue
 
-        # 获取必要的数据
-        key = api_data['key']
-        parentclass = api_data.get('parentclass')
-        platforms = api_data.get('platforms', [])
+        for change_item in json_data[change_type]:
+            # 检查是否需要处理该 API
+            if change_item.get('attributes') not in ['api', 'callback']:
+                continue
 
-        # 转换平台名称
-        props = []
-        for platform in platforms:
-            if platform in platform_map:
-                props.append(platform_map[platform])
+            # 获取必要的数据
+            key = change_item['key']
+            parentclass = change_item.get('parentclass')
+            platforms = change_item.get('platforms', [])
 
-        if not props or not parentclass:
-            continue
+            # 转换平台名称
+            props = []
+            if "all" not in platforms:  # 只有当不是 "all" 时才添加 props
+                props = [platform_map[p] for p in platforms if p in platform_map]
 
-        # 构建 props 属性字符串
-        props_str = ' '.join(props)
+            if not parentclass:
+                continue
 
-        # 在 reltable 中查找对应的 parentclass
-        for relrow in root.findall('.//relrow'):
-            found = False
-            has_props = False  # 初始化 props 检查标志
-            target_cell = None
+            # 构建 props 属性字符串
+            props_str = ' '.join(props)
 
-            # 查找包含目标 parentclass 的 relcell
-            for relcell in relrow.findall('relcell'):
-                for topicref in relcell.findall('topicref'):
-                    if topicref.get('keyref') == parentclass:
-                        # 检查是否有任何 props 属性
-                        for ancestor in topicref.iterancestors():
-                            if ancestor.get('props') is not None:
-                                has_props = True
-                                print(f"Skipping API {key} as its parent has props attribute")
+            # 在 reltable 中查找对应的 parentclass
+            for relrow in root.findall('.//relrow'):
+                found = False
+                has_props = False
+                target_cell = None
+
+                # 查找包含目标 parentclass 的 relcell
+                for relcell in relrow.findall('relcell'):
+                    for topicref in relcell.findall('topicref'):
+                        if topicref.get('keyref') == parentclass:
+                            # 检查是否有任何 props 属性
+                            for ancestor in topicref.iterancestors():
+                                if ancestor.get('props') is not None:
+                                    has_props = True
+                                    print(f"Skipping API {key} as its parent has props attribute")
+                                    break
+
+                            if has_props:
                                 break
 
-                        if has_props:
+                            # 找到目标 relcell，获取另一个 relcell
+                            target_cell = relrow.findall('relcell')[0]
+                            found = True
+                            break
+                    if found or has_props:
+                        break
+
+                if found and target_cell is not None and not has_props:
+                    # 检查是否已存在相同的 keyref
+                    exists = False
+                    for existing_topicref in target_cell.findall('topicref'):
+                        if existing_topicref.get('keyref') == key:
+                            exists = True
                             break
 
-                        # 找到目标 relcell，获取另一个 relcell
-                        target_cell = relrow.findall('relcell')[0]
-                        found = True
-                        break
-                if found or has_props:
-                    break
+                    if not exists:
+                        # 创建新的 topicref 元素
+                        new_topicref = etree.Element('topicref')
+                        new_topicref.set('keyref', key)
+                        if props:  # 只有当 props 不为空时才添加
+                            new_topicref.set('props', ' '.join(props))
 
-            if found and target_cell is not None and not has_props:
-                # 检查是否已存在相同的 keyref
-                exists = False
-                for existing_topicref in target_cell.findall('topicref'):
-                    if existing_topicref.get('keyref') == key:
-                        exists = True
-                        break
+                        # 获取当前缩进级别
+                        current_indent = ''
+                        parent = target_cell
+                        while parent is not None:
+                            current_indent += '    '
+                            parent = parent.getparent()
 
-                if not exists:
-                    # 创建新的 topicref 元素
-                    new_topicref = etree.Element('topicref')
-                    new_topicref.set('keyref', key)
-                    new_topicref.set('props', props_str)
+                        # 设置新元素的缩进
+                        new_topicref.tail = '\n' + current_indent
 
-                    # 获取当前缩进级别
-                    current_indent = ''
-                    parent = target_cell
-                    while parent is not None:
-                        current_indent += '    '
-                        parent = parent.getparent()
+                        # 添加到目标 relcell 并按字母顺序排序
+                        target_cell.append(new_topicref)
+                        changes_made += 1
+                        print(f"Added relation for API {key} under {parentclass}")
 
-                    # 设置新元素的缩进
-                    new_topicref.tail = '\n' + current_indent
+                        # 获取所有 topicref 元素并排序
+                        topicrefs = target_cell.findall('topicref')
+                        sorted_topicrefs = sorted(topicrefs, key=lambda x: x.get('keyref', ''))
 
-                    # 添加到目标 relcell 并按字母顺序排序
-                    target_cell.append(new_topicref)
-                    changes_made += 1
-                    print(f"Added relation for API {key} under {parentclass}")
+                        # 清空 relcell
+                        for child in list(target_cell):
+                            target_cell.remove(child)
 
-                    # 获取所有 topicref 元素并排序
-                    topicrefs = target_cell.findall('topicref')
-                    sorted_topicrefs = sorted(topicrefs, key=lambda x: x.get('keyref', ''))
-
-                    # 清空 relcell
-                    for child in list(target_cell):
-                        target_cell.remove(child)
-
-                    # 重新按顺序添加元素
-                    for i, topicref in enumerate(sorted_topicrefs):
-                        # 设置适当的缩进
-                        if i < len(sorted_topicrefs) - 1:
-                            topicref.tail = '\n' + current_indent
-                        else:
-                            # 最后一个元素的缩进需要特殊处理
-                            topicref.tail = '\n' + current_indent[:-4]
-                        target_cell.append(topicref)
+                        # 重新按顺序添加元素
+                        for i, topicref in enumerate(sorted_topicrefs):
+                            if i < len(sorted_topicrefs) - 1:
+                                topicref.tail = '\n' + current_indent
+                            else:
+                                topicref.tail = '\n' + current_indent[:-4]
+                            target_cell.append(topicref)
 
     # 如果有修改，保存文件
     if changes_made > 0:
@@ -533,78 +536,76 @@ def insert_datatype(datatype_path):
     # 创建平台映射字典
     platform_map = {config['platform']: config['platform3'] for config in platform_configs}
 
-    # 遍历所有 API 数据
-    for api_key, api_data in json_data.items():
-        # 只处理 class 和 enum 类型
-        attributes = api_data.get('attributes')
-        if attributes not in ['class', 'enum']:
+    # 遍历所有类型的变更
+    for change_type, section_id in [('struct_changes', 'class'), ('enum_changes', 'enum')]:
+        if change_type not in json_data:
             continue
 
-        # 获取平台信息并转换
-        platforms = api_data.get('platforms', [])
-        props = []
-        for platform in platforms:
-            if platform in platform_map:
-                props.append(platform_map[platform])
+        for change_item in json_data[change_type]:
+            platforms = change_item.get('platforms', [])
+            props = []
+            if "all" in platforms:
+                props = [platform_map[p] for p in platform_map.keys()]
+            else:
+                props = [platform_map[p] for p in platforms if p in platform_map]
 
-        if not props:
-            continue
+            if not props:
+                continue
 
-        # 查找对应的 section
-        section = root.find(f".//section[@id='{attributes}']")
-        if section is None:
-            print(f"警告: 未找到 section id='{attributes}'")
-            continue
+            # 查找对应的 section
+            section = root.find(f".//section[@id='{section_id}']")
+            if section is None:
+                print(f"警告: 未找到 section id='{section_id}'")
+                continue
 
-        changes_in_api = 0
+            changes_in_api = 0
 
-        # 为每个平台创建或更新 ul 元素
-        for prop in props:
-            # 查找或创建对应平台的 ul
-            ul = section.find(f"ul[@props='{prop}']")
-            if ul is None:
-                ul = etree.SubElement(section, 'ul')
-                ul.set('props', prop)
-                # 设置适当的缩进
-                ul.tail = '\n            '
+            # 为每个平台创建或更新 ul 元素
+            for prop in props:
+                # 查找或创建对应平台的 ul
+                ul = section.find(f"ul[@props='{prop}']")
+                if ul is None:
+                    ul = etree.SubElement(section, 'ul')
+                    ul.set('props', prop)
+                    ul.tail = '\n            '
 
-            # 检查是否已存在相同的 xref
-            exists = False
-            for li in ul.findall('li'):
-                xref = li.find('xref')
-                if xref is not None and xref.get('keyref') == api_data['key']:
-                    exists = True
-                    break
+                # 检查是否已存在相同的 xref
+                exists = False
+                for li in ul.findall('li'):
+                    xref = li.find('xref')
+                    if xref is not None and xref.get('keyref') == change_item['key']:
+                        exists = True
+                        break
 
-            if not exists:
-                # 创建新的 li 和 xref 元素
-                new_li = etree.SubElement(ul, 'li')
-                new_xref = etree.SubElement(new_li, 'xref')
-                new_xref.set('keyref', api_data['key'])
+                if not exists:
+                    # 创建新的 li 和 xref 元素
+                    new_li = etree.SubElement(ul, 'li')
+                    new_xref = etree.SubElement(new_li, 'xref')
+                    new_xref.set('keyref', change_item['key'])
 
-                # 设置缩进
-                new_li.tail = '\n            '
+                    # 设置缩进
+                    new_li.tail = '\n            '
 
-                changes_in_api += 1
-                print(f"添加了 {api_data['key']} 到 {prop} 平台的 {attributes} 部分")
+                    changes_in_api += 1
+                    print(f"添加了 {change_item['key']} 到 {prop} 平台的 {section_id} 部分")
 
-                # 对 li 元素进行排序
-                lis = ul.findall('li')
-                sorted_lis = sorted(lis, key=lambda x: x.find('xref').get('keyref', ''))
+                    # 对 li 元素进行排序
+                    lis = ul.findall('li')
+                    sorted_lis = sorted(lis, key=lambda x: x.find('xref').get('keyref', ''))
 
-                # 清空 ul
-                for child in list(ul):
-                    ul.remove(child)
+                    # 清空 ul
+                    for child in list(ul):
+                        ul.remove(child)
 
-                # 重新按顺序添加元素
-                for i, li in enumerate(sorted_lis):
-                    if i < len(sorted_lis) - 1:
-                        li.tail = '\n            '
-                    else:
-                        li.tail = '\n        '
-                    ul.append(li)
+                    # 重新按顺序添加元素
+                    for i, li in enumerate(sorted_lis):
+                        if i < len(sorted_lis) - 1:
+                            li.tail = '\n            '
+                        else:
+                            li.tail = '\n        '
+                        ul.append(li)
 
-        changes_made += changes_in_api
+            changes_made += changes_in_api
 
     # 如果有修改，保存文件
     if changes_made > 0:
@@ -622,8 +623,8 @@ def main(platform_configs):
 
 # 添加到主程序中的调用
 if __name__ == "__main__":
-    relations_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG/config/relations-rtc-ng-api.ditamap'
-    datatype_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/RTC-NG/API/rtc_api_data_type.dita'
+    relations_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita/RTC-NG/config/relations-rtc-ng-api.ditamap'
+    datatype_path = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita/RTC-NG/API/rtc_api_data_type.dita'
     platform_configs = [
         {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
         {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS', 'platform3': 'ios'},

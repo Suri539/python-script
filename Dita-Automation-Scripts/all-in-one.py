@@ -31,8 +31,20 @@ PLATFORM_TO_KEYSMAP = {
     "rn": "rn"
 }
 
+# 定义平台配置
+platform_configs = [
+    {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
+    {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS', 'platform3': 'ios'},
+    {'platform': 'macos', 'platform1': 'macos', 'platform2': 'macOS', 'platform3': 'mac'},
+    {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP', 'platform3': 'cpp'},
+    {'platform': 'flutter', 'platform1': 'flutter', 'platform2': 'Flutter', 'platform3': 'flutter'},
+    {'platform': 'unity', 'platform1': 'unity', 'platform2': 'Unity', 'platform3': 'unity'},
+    {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron', 'platform3': 'electron'},
+    {'platform': 'rn', 'platform1': 'rn', 'platform2': 'RN', 'platform3': 'rn'},
+]
+
 # 获取基础目录路径
-base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
+base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -1465,18 +1477,6 @@ def main():
         'enum': os.path.join(base_dir, 'templates-cn/RTC/Enum.dita'),
         'class': os.path.join(base_dir, 'templates-cn/RTC/Class.dita')
     }
-
-    # 定义平台配置
-    platform_configs = [
-        {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
-        {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS', 'platform3': 'ios'},
-        {'platform': 'macos', 'platform1': 'macos', 'platform2': 'macOS', 'platform3': 'mac'},
-        {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP', 'platform3': 'cpp'},
-        {'platform': 'flutter', 'platform1': 'flutter', 'platform2': 'Flutter', 'platform3': 'flutter'},
-        {'platform': 'unity', 'platform1': 'unity', 'platform2': 'Unity', 'platform3': 'unity'},
-        {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron', 'platform3': 'electron'},
-        {'platform': 'rn', 'platform1': 'rn', 'platform2': 'RN', 'platform3': 'rn'},
-    ]
 
     # 定义输出目录
     new_file_path = os.path.join(base_dir, 'RTC-NG/API')

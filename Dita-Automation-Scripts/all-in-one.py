@@ -1237,9 +1237,11 @@ def parse_keysmaps():
 
         # 处理该平台的所有API
         for api_data in platform_apis[json_platform]:
-            if create_and_insert_keydef(root, api_data, json_platform):
-                changes_made += 1
-                success_messages.append(f"Added keydef for API {api_data['key']} to {json_platform}")
+            # 仅在指定的平台中添加 keydef
+            if json_platform in api_data.get('platforms', []) or "all" in api_data.get('platforms', []):
+                if create_and_insert_keydef(root, api_data, json_platform):
+                    changes_made += 1
+                    success_messages.append(f"Added keydef for API {api_data['key']} to {json_platform}")
 
         # 如果有修改，保存文件
         if changes_made > 0:

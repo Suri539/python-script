@@ -44,7 +44,7 @@ platform_configs = [
 ]
 
 # 获取基础目录路径
-base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/dita'
+base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -1308,11 +1308,11 @@ def insert_relations(relations_path):
                 for relcell in relrow.findall('relcell'):
                     for topicref in relcell.findall('topicref'):
                         if topicref.get('keyref') == parentclass:
-                            # 检查是否有任何 props 属性
+                            # 检查父节点是否有 props="hide" 属性
                             for ancestor in topicref.iterancestors():
-                                if ancestor.get('props') is not None:
+                                if ancestor.get('props') == 'hide':
                                     has_props = True
-                                    print(f"Skipping API {key} as its parent has props attribute")
+                                    print(f"Skipping API {key} as its parent has props='hide' attribute")
                                     break
 
                             if has_props:

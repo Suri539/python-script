@@ -25,7 +25,7 @@ PLATFORM_TO_KEYSMAP = {
     "macos": "macos",
     "unity": "unity",
     "unreal": "unreal",
-    "cs": "cs",
+    "cs": "unity",
     "electron": "electron",
     "flutter": "flutter",
     "rn": "rn"

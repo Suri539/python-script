@@ -31,6 +31,8 @@ PLATFORM_TO_KEYSMAP = {
     "rn": "rn"
 }
 
+# 获取基础目录路径
+base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -42,7 +44,7 @@ def create_dita_file(template_path, new_file_path):
     if os.path.exists(new_file_path):
         print(f"警告：文件已存在，跳过创建：{new_file_path}")
         return False
-        
+
     try:
         with open(template_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -65,10 +67,10 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
     """更新参数部分"""
     if not params_data or platform not in params_data:
         return
-    
+
     platform_prop = get_platform_prop(platform, platform_configs)
     existing_params = {}
-    
+
     # 找到 parml 元素
     parml = parameters_section.find('parml')
     if parml is None:
@@ -84,10 +86,10 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
                 pds = empty_plentry.findall('pd')
                 if all(not pt.text for pt in pts) and all(not pd.text for pd in pds):
                     parml.remove(empty_plentry)
-    
+
     # 添加换行和缩进
     parml.text = '\n            '  # parml 后的首次换行
-    
+
     # 收集现有参数信息
     for plentry in parml.findall('plentry'):
         pts = plentry.findall('pt')
@@ -95,7 +97,7 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
             name = pt.text
             if name:  # 只处理非空参数名
                 existing_params[name] = plentry
-                
+
         # 为现有的 plentry 添加合适的缩进
         plentry.tail = '\n            '
         for elem in plentry:
@@ -103,21 +105,21 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
         # 最后一个元素的 tail 需要调整缩进级别
         if len(plentry) > 0:
             plentry[-1].tail = '\n            '
-    
+
     # 处理新参数
     for param in params_data[platform]:
         if param['change_type'] != 'create':
             continue
-            
+
         param_name = param['name']
         param_desc = param['desc']
-        
+
         if param_name in existing_params:
             # 更新现有参数
             plentry = existing_params[param_name]
             pt_found = False
             pd_found = False
-            
+
             for pt in plentry.findall('pt'):
                 if pt.text == param_name:
                     props = pt.get('props', '').split()
@@ -125,7 +127,7 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
                         props.append(platform_prop)
                         pt.set('props', ' '.join(props))
                     pt_found = True
-                    
+
             for pd in plentry.findall('pd'):
                 if pd.text == param_desc:
                     props = pd.get('props', '').split()
@@ -133,13 +135,13 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
                         props.append(platform_prop)
                         pd.set('props', ' '.join(props))
                     pd_found = True
-            
+
             if not pt_found:
                 new_pt = etree.SubElement(plentry, 'pt')
                 new_pt.text = param_name
                 new_pt.set('props', platform_prop)
                 new_pt.tail = '\n                '
-                
+
             if not pd_found:
                 new_pd = etree.SubElement(plentry, 'pd')
                 new_pd.text = param_desc
@@ -150,19 +152,19 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
             plentry = etree.SubElement(parml, 'plentry')
             plentry.text = '\n                '
             plentry.tail = '\n            '
-            
+
             pt = etree.SubElement(plentry, 'pt')
             pt.text = param_name
             pt.set('props', platform_prop)
             pt.tail = '\n                '
-            
+
             pd = etree.SubElement(plentry, 'pd')
             pd.text = param_desc
             pd.set('props', platform_prop)
             pd.tail = '\n            '
-            
+
             existing_params[param_name] = plentry
-    
+
     # 调整最后一个 plentry 的缩进
     if len(parml) > 0:
         parml[-1].tail = '\n        '
@@ -171,35 +173,35 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
     """处理单个 API 变更"""
     if change_item['change_type'] != 'create':
         return
-        
+
     # 确定模板和文件名
     is_callback = change_item['attributes'] == 'callback'
     template_path = templates['callback'] if is_callback else templates['method']
     prefix = 'callback' if is_callback else 'api'
-    
+
     file_name = f"{prefix}_{change_item['parentclass']}_{change_item['key']}.dita".lower()
     full_file_path = os.path.join(new_file_path, file_name)
-    
+
     # 创建文件，如果文件已存在则返回
     if not create_dita_file(template_path, full_file_path):
         return
-    
+
     # 解析并更新文件
     tree = etree.parse(full_file_path)
     root = tree.getroot()
-    
+
     # 更新各个字段，添加错误检查
     if root.tag != 'reference':
         print(f"错误：根元素不是 reference，而是 {root.tag}")
         return
     root.set('id', file_name[:-5])
-    
+
     title_ph = root.find('.//ph[@keyref]')
     if title_ph is None:
         print(f"错误：在文件 {file_name} 中找不到 title ph 标签")
     else:
         title_ph.set('keyref', change_item['key'])
-    
+
     # 1. 更新 shortdesc，删除 oxy-placeholder
     try:
         shortdesc_ph = root.find('.//shortdesc/ph')
@@ -212,14 +214,14 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
             print(f"成功更新 shortdesc")
     except Exception as e:
         print(f"更新 shortdesc 时出错：{str(e)}")
-    
+
     # 2. 更新 API 原型
     prototype_section = root.find('.//section[@id="prototype"]')
     if prototype_section is not None and 'api_signature' in change_item:
         for platform, signature in change_item['api_signature'].items():
             # 获取正确的平台属性
             platform_prop = get_platform_prop(platform, platform_configs)
-            
+
             # 根据平台找到对应的 codeblock
             if platform == 'windows':
                 codeblock = prototype_section.find('.//codeblock[@props="cpp unreal"]')
@@ -229,60 +231,60 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
                 codeblock = prototype_section.find('.//codeblock[@props="ios mac"]')
             else:
                 codeblock = prototype_section.find(f'.//codeblock[@props="{platform_prop}"]')
-            
+
             if codeblock is not None:
                 codeblock.text = signature
             else:
                 print(f"警告：找不到 {platform} 平台的 codeblock")
-    
+
     # 3. 更新 detailed_desc 部分
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-        
+
         # 更新 since 版本
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             dd = detailed_desc_section.find('.//dlentry/dd')
             if dd is not None and 'since' in desc['detailed_desc'][0]:
                 dd.text = f"v{desc['detailed_desc'][0]['since']}"
-        
+
         # 更新描述
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             p = detailed_desc_section.find('p')
             if p is not None and 'desc' in desc['detailed_desc'][0]:
                 p.text = desc['detailed_desc'][0]['desc']
-    
+
     # 4. 更新调用限制和相关回调
     desc = change_item.get('description', {})
-    
+
     # 更新调用限制
     restriction_section = root.find('.//section[@id="restriction"]/p')
     if restriction_section is not None and 'restrictions' in desc:
         restriction_section.text = desc['restrictions']
-    
+
     # 更新相关回调
     related_section = root.find('.//section[@id="related"]/p')
     if related_section is not None and 'related' in desc:
         related_section.text = desc['related']
-    
+
     indexterm = root.find('.//indexterm')
     if indexterm is None:
         print(f"错误：在文件 {file_name} 中找不到 indexterm 标签")
     else:
         indexterm.set('keyref', change_item['key'])
-    
+
     # 更新描述相关字段
     desc = change_item['description']
-    
+
     detailed_desc_dd = root.find('.//section[@id="detailed_desc"]//dlentry/dd')
     if detailed_desc_dd is not None and 'since' in desc:
         detailed_desc_dd.text = f"v{desc['since']}"
-        
+
     if 'detailed_desc' in desc and 'desc' in desc['detailed_desc']:
         detailed_desc_p = root.find('.//section[@id="detailed_desc"]/p')
         if detailed_desc_p is not None:
             detailed_desc_p.text = desc['detailed_desc']['desc']
-    
+
     # 更新其他描述字段
     field_mappings = {
         'scenarios': 'scenario',
@@ -290,30 +292,30 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
         'restriction': 'restriction',
         'related': 'related'
     }
-    
+
     for json_field, section_id in field_mappings.items():
         if json_field in desc:
             section = root.find(f'.//section[@id="{section_id}"]/p')
             if section is not None:
                 section.text = desc[json_field]
-    
+
     # 更新参数部分
     if 'parameters' in desc:
         parameters_section = root.find('.//section[@id="parameters"]')
         if parameters_section is not None:
             for platform in desc['parameters'].keys():
                 update_parameters_section(parameters_section, desc['parameters'], platform, platform_configs)
-    
+
     # 获取描述相关字段
     desc = change_item.get('description', {})
-    
+
     # 1. 处理可能需要删除的部分
     sections_to_check = {
         'scenario': desc.get('scenarios', ''),
         'related': desc.get('related', ''),
         'parameters': desc.get('parameters', {})
     }
-    
+
     for section_id, content in sections_to_check.items():
         section = root.find(f'.//section[@id="{section_id}"]')
         if section is not None:
@@ -325,7 +327,7 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
                 if not any(content.values()):
                     section.getparent().remove(section)
                     print("已删除空的 parameters section")
-    
+
     # 2. 处理 timing section
     timing_section = root.find('.//section[@id="timing"]/p')
     if timing_section is not None:
@@ -335,7 +337,7 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
             print("已设置默认的 timing 内容")
         else:
             timing_section.text = timing_content
-    
+
     # 3. 处理 restriction section
     restriction_section = root.find('.//section[@id="restriction"]/p')
     if restriction_section is not None:
@@ -345,7 +347,7 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
             print("已设置默认的 restriction 内容")
         else:
             restriction_section.text = restriction_content
-    
+
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
@@ -353,33 +355,33 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
     """处理单个枚举变更"""
     if change_item['change_type'] != 'create':
         return
-        
+
     # 处理文件名：删除连字符并转换为小写
     enum_key = change_item['key'].replace('-', '').lower()
     file_name = f"enum_{enum_key}.dita"
     full_file_path = os.path.join(new_file_path, file_name)
-    
+
     # 创建文件，如果文件已存在则返回
     if not create_dita_file(templates['enum'], full_file_path):
         return
-    
+
     # 解析并更新文件
     tree = etree.parse(full_file_path)
     root = tree.getroot()
-    
+
     # 更新各个字段，添加错误检查
     if root.tag != 'reference':
         print(f"错误：根元素不是 reference，而是 {root.tag}")
         return
     root.set('id', file_name[:-5])
-    
+
     # 更新 title
     title_ph = root.find('.//ph[@keyref]')
     if title_ph is None:
         print(f"错误：在文件 {file_name} 中找不到 title ph 标签")
     else:
         title_ph.set('keyref', change_item['key'])
-    
+
     # 更新 shortdesc
     try:
         shortdesc_ph = root.find('.//shortdesc/ph')
@@ -392,24 +394,24 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
             print(f"成功更新 shortdesc")
     except Exception as e:
         print(f"更新 shortdesc 时出错：{str(e)}")
-    
+
     # 更新 detailed_desc 部分
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-        
+
         # 更新 since 版本
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             dd = detailed_desc_section.find('.//dlentry/dd')
             if dd is not None and 'since' in desc['detailed_desc'][0]:
                 dd.text = f"v{desc['detailed_desc'][0]['since']}"
-        
+
         # 更新描述
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             p = detailed_desc_section.find('p')
             if p is not None and 'desc' in desc['detailed_desc'][0]:
                 p.text = desc['detailed_desc'][0]['desc']
-    
+
     # 更新枚举值部分
     if 'enumerations' in change_item['description']:
         enums_section = root.find('.//section[@id="parameters"]')
@@ -418,7 +420,7 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
             parml = enums_section.find('parml')
             if parml is None:
                 parml = etree.SubElement(enums_section, 'parml')
-            
+
             # 清除模板中的空 plentry
             for empty_plentry in parml.findall('plentry'):
                 if not empty_plentry.findall('pt') or not empty_plentry.findall('pd'):
@@ -428,10 +430,10 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
                     pds = empty_plentry.findall('pd')
                     if all(not pt.text for pt in pts) and all(not pd.text for pd in pds):
                         parml.remove(empty_plentry)
-            
+
             # 添加换行和缩进
             parml.text = '\n            '
-            
+
             # 按 alias 组织枚举值
             enum_groups = {}
             for platform, enums in change_item['description']['enumerations'].items():
@@ -439,55 +441,55 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
                 for enum in enums:
                     if enum['change_type'] != 'create':
                         continue
-                    
+
                     alias = enum['alias']
                     if alias not in enum_groups:
                         enum_groups[alias] = {}
-                    
+
                     if platform not in enum_groups[alias]:
                         enum_groups[alias][platform] = {
                             'value': enum['value'],
                             'desc': enum['desc'],
                             'platform_prop': platform_prop
                         }
-            
+
             # 创建枚举值条目
             for alias, platforms in enum_groups.items():
                 plentry = etree.SubElement(parml, 'plentry')
                 plentry.text = '\n                '
                 plentry.tail = '\n            '
-                
+
                 # 收集所有平台的值和描述
                 values = {}
                 descs = {}
                 platform_props = set()
-                
+
                 for platform, info in platforms.items():
                     values[info['value']] = info['platform_prop']
                     descs[info['desc']] = info['platform_prop']
                     platform_props.add(info['platform_prop'])
-                
+
                 # 先创建所有的 pt 元素
                 for value, prop in values.items():
                     pt = etree.SubElement(plentry, 'pt')
                     pt.text = value
                     pt.set('props', prop)
                     pt.tail = '\n                '
-                
+
                 # 再创建 pd 元素
                 for desc in set(info['desc'] for info in platforms.values()):
                     pd = etree.SubElement(plentry, 'pd')
                     pd.text = desc
                     pd.set('props', ' '.join(platform_props))
                     pd.tail = '\n            '
-                
+
                 # 调整最后一个元素的缩进
                 if len(plentry) > 0:
                     plentry[-1].tail = '\n            '
-            
+
             # 调整 parml 的缩进
             parml.tail = '\n        '
-    
+
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
@@ -495,33 +497,33 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
     """处理单个类变更"""
     if change_item['change_type'] != 'create':
         return
-        
+
     # 处理文件名
     class_key = change_item['key'].lower()
     file_name = f"class_{class_key}.dita"
     full_file_path = os.path.join(new_file_path, file_name)
-    
+
     # 创建文件，如果文件已存在则返回
     if not create_dita_file(templates['class'], full_file_path):
         return
-    
+
     # 解析并更新文件
     tree = etree.parse(full_file_path)
     root = tree.getroot()
-    
+
     # 更新各个字段
     if root.tag != 'reference':
         print(f"错误：根元素不是 reference，而是 {root.tag}")
         return
     root.set('id', file_name[:-5])
-    
+
     # 更新 title
     title_ph = root.find('.//ph[@keyref]')
     if title_ph is None:
         print(f"错误：在文件 {file_name} 中找不到 title ph 标签")
     else:
         title_ph.set('keyref', change_item['key'])
-    
+
     # 更新 shortdesc
     try:
         shortdesc_ph = root.find('.//shortdesc/ph')
@@ -534,40 +536,40 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
             print(f"成功更新 shortdesc")
     except Exception as e:
         print(f"更新 shortdesc 时出错：{str(e)}")
-    
+
     # 更新 detailed_desc 部分
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-        
+
         # 更新 since 版本
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             dd = detailed_desc_section.find('.//dlentry/dd')
             if dd is not None and 'since' in desc['detailed_desc'][0]:
                 dd.text = f"v{desc['detailed_desc'][0]['since']}"
-        
+
         # 更新描述
         if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
             p = detailed_desc_section.find('p')
             if p is not None and 'desc' in desc['detailed_desc'][0]:
                 p.text = desc['detailed_desc'][0]['desc']
-    
+
     # 删除 sub-class 和 sub-method sections
     for section_id in ['sub-class', 'sub-method']:
         section = root.find(f'.//section[@id="{section_id}"]')
         if section is not None:
             section.getparent().remove(section)
-    
+
     # 更新参数部分
     if 'parameters' in change_item.get('description', {}):
         parameters_section = root.find('.//section[@id="parameters"]')
         if parameters_section is not None:
             for platform in change_item['description']['parameters']:
-                update_parameters_section(parameters_section, 
-                                       change_item['description']['parameters'], 
-                                       platform, 
+                update_parameters_section(parameters_section,
+                                       change_item['description']['parameters'],
+                                       platform,
                                        platform_configs)
-    
+
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
@@ -579,23 +581,23 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
             content = f.read()
             print(f"成功读取 JSON 文件")
             changes = json.loads(content)
-            
+
             # 检查变更数据
             print("\n变更数据统计：")
             print(f"API 变更数量: {len(changes.get('api_changes', []))}")
             print(f"枚举变更数量: {len(changes.get('enum_changes', []))}")
             print(f"类变更数量: {len(changes.get('struct_changes', []))}")
-            
+
             # 检查是否有 create 类型的变更
             create_apis = [c for c in changes.get('api_changes', []) if c.get('change_type') == 'create']
             create_enums = [c for c in changes.get('enum_changes', []) if c.get('change_type') == 'create']
             create_structs = [c for c in changes.get('struct_changes', []) if c.get('change_type') == 'create']
-            
+
             print("\n新建类型的变更数量：")
             print(f"新建 API 数量: {len(create_apis)}")
             print(f"新建枚举数量: {len(create_enums)}")
             print(f"新建类数量: {len(create_structs)}")
-            
+
     except FileNotFoundError:
         print(f"错误：找不到文件 {json_file_path}")
         return
@@ -606,7 +608,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
     except Exception as e:
         print(f"发生未预期的错误：{str(e)}")
         return
-    
+
     # 检查输出目录
     if not os.path.exists(new_file_path):
         print("输出目录不存在，尝试创建...")
@@ -616,7 +618,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         except Exception as e:
             print(f"创建输出目录失败：{str(e)}")
             return
-    
+
     # 处理变更
     if create_apis:
         print("\n开始处理 API 变更...")
@@ -625,7 +627,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
                 process_api_change(change, templates, platform_configs, new_file_path)
             except Exception as e:
                 print(f"处理 API {change.get('key', '未知')} 时出错：{str(e)}")
-    
+
     if create_enums:
         print("\n开始处理枚举变更...")
         for change in create_enums:
@@ -633,7 +635,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
                 process_enum_change(change, templates, platform_configs, new_file_path)
             except Exception as e:
                 print(f"处理枚举 {change.get('key', '未知')} 时出错：{str(e)}")
-    
+
     if create_structs:
         print("\n开始处理类变更...")
         for change in create_structs:
@@ -1455,9 +1457,7 @@ def insert_datatype(datatype_path):
         print(f"未对 {datatype_path} 进行任何修改")
 
 def main():
-    # 获取基础目录路径
-    base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
-    
+
     # 定义模板文件路径
     templates = {
         'method': os.path.join(base_dir, 'templates-cn/RTC/Method.dita'),
@@ -1465,7 +1465,7 @@ def main():
         'enum': os.path.join(base_dir, 'templates-cn/RTC/Enum.dita'),
         'class': os.path.join(base_dir, 'templates-cn/RTC/Class.dita')
     }
-    
+
     # 定义平台配置
     platform_configs = [
         {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
@@ -1477,31 +1477,31 @@ def main():
         {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron', 'platform3': 'electron'},
         {'platform': 'rn', 'platform1': 'rn', 'platform2': 'RN', 'platform3': 'rn'},
     ]
-    
+
     # 定义输出目录
     new_file_path = os.path.join(base_dir, 'RTC-NG/API')
     # 定义 relations 和 datatype 文件路径
     relations_path = os.path.join(base_dir, 'RTC-NG/config/relations-rtc-ng-api.ditamap')
     datatype_path = os.path.join(base_dir, 'RTC-NG/API/rtc_api_data_type.dita')
-    
+
     # 检查并创建输出目录
     os.makedirs(new_file_path, exist_ok=True)
-    
+
     # 读取 JSON 数据
     json_file_path = 'data.json'
-    
+
     try:
         # 创建新的 DITA 文件
         create_dita_files(json_file_path, templates, platform_configs, new_file_path)
-        
+
         process_all_ditamaps()
         parse_keysmaps()
         insert_relations(relations_path)
         insert_datatype(datatype_path)
         modify_dita_files()
-        
+
         print("所有操作已完成")
-        
+
     except Exception as e:
         print(f"执行过程中发生错误：{str(e)}")
         raise

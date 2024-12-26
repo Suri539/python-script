@@ -1,90 +1,90 @@
 {
     "api_changes": [
         {
-            "key": "joinChannel2",
+            "key": "selectAudioTrack",
             "api_signature": {
-                "android": "android prototype",
-                "ios": "ios prototype",
-                "windows": "windows prototype",
-                "macos": "macos prototype"
+                "android": "public Map<String, ChannelMediaInfo> getDestChannelMediaInfos()",
+                "ios": "- (int)selectAgoraVideoTrack:(NSInteger)index NS_SWIFT_NAME(selectAudioTrack(_:));",
+                "windows": "virtual int selectVideoTrack(int index) = 0;",
+                "macos": "- (int)selectAgoraVideoTrack:(NSInteger)index NS_SWIFT_NAME(selectAudioTrack(_:));"
             },
             "keyword": {
-                "android": "SampleAPI",
-                "ios": "AgoraSampleAPI",
-                "windows": "sampleApi",
-                "macos": "AgoraSampleAPI"
+                "android": "selectVideoTrack",
+                "ios": "selectAgoraVideoTrack",
+                "windows": "selectAgoraVideoTrack",
+                "macos": "selectAgoraVideoTrack"
             },
-            "change_type": "modify",
-            "change_desc": "变更的总结",
+            "change_type": "create",
+            "change_desc": "API 新增",
             "toc_href": "API/toc_channel.dita",
-            "parentclass": "IRtcEngine",
-            "platforms": ["all"],
+            "parentclass": "IMetadataObserver",
+            "platforms": ["android","ios","windows","macos"],
             "navtitle": "核心方法",
             "attributes": "api",
             "description": {
-                "shortdesc": "short description of the api",
+                "shortdesc": "指定当前音乐文件的播放音轨。",
                 "detailed_desc": [
                     {
-                        "since": "which version introduced the api",
-                        "desc": "detailed description of the api"
+                        "since": "4.6.0",
+                        "desc": "获取音乐文件的音轨数量后，你可以调用该方法指定任一音轨进行播放。"
                     }
                 ],
-                "scenarios": "use case scenarios of the api",
-                "timing": "timing of the api",
-                "restrictions": "restrictions of the api",
+                "scenarios": "例如，如果一个多音轨文件的不同音轨存放了不同语言的歌曲，则你可以调用该方法设置音乐文件的播放语言。",
+                "timing": "你需要在调用 startAudioMixing 并收到 onAudioMixingStateChanged(AUDIO_MIXING_STATE_PLAYING) 回调后调用该方法。",
+                "restrictions": "无",
                 "parameters": {
                     "android": [
                         {
-                            "name": "option",
-                            "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "modify",
+                            "name": "index",
+                            "type": "AdvancedAudioOptions",
+                            "desc": "指定的播放音轨。取值范围应大于等于 0 且小于 getAudioTrackCount 的返回值。",
+                            "change_type": "create",
                             "old_value": "option",
                             "new_value": "options"
                         }
                     ],
                     "ios": [
                         {
-                            "name": "option",
-                            "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "modify",
-                            "old_value": "AgoraOption",
-                            "new_value": "AgoraOptions"
+                            "name": "audioIndex",
+                            "type": "AdvancedAudioOptions",
+                            "desc": "指定的播放音轨。取值范围应大于等于 0 且小于 getAudioTrackCount 的返回值。",
+                            "change_type": "create",
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ],
                     "windows": [
                         {
-                            "name": "option",
-                            "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "modify",
-                            "old_value": "option",
-                            "new_value": "options"
+                            "name": "index",
+                            "type": "AdvancedAudioOptions",
+                            "desc": "指定的播放音轨。取值范围应大于等于 0 且小于 getAudioTrackCount 的返回值。",
+                            "change_type": "create",
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ],
                     "macos": [
                         {
-                            "name": "option",
+                            "name": "audioIndex",
                             "type": "PublishFallbackOption",
-                            "desc": "",
-                            "change_type": "modify",
-                            "old_value": "AgoraOption",
-                            "new_value": "AgoraOptions"
+                            "desc": "指定的播放音轨。取值范围应大于等于 0 且小于 getAudioTrackCount 的返回值。",
+                            "change_type": "create",
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
                 "return_values": {
-                    "android": "return value description",
-                    "ios": "return value description",
-                    "windows": "return value description",
-                    "macos": "return value description"
+                    "android": "方法调用失败时，抛出异常。",
+                    "ios": "0: 方法调用成功。\n< 0: 方法调用失败。详见错误码了解详情和解决建议。",
+                    "windows": "0: 方法调用成功。\n< 0: 方法调用失败。详见错误码了解详情和解决建议。",
+                    "macos": "0: 方法调用成功。\n< 0: 方法调用失败。详见错误码了解详情和解决建议。"
                 },
                 "old_api_name": "",
                 "old_api_signature": "",
-                "need_en": "true|false",
+                "need_en": "true",
                 "extra_info": {
-                    "remarks": "",
+                    "remarks": "该方法支持的音频文件格式见 RTC SDK 支持播放哪些格式的音频文件？。",
                     "jira": ""
                 }
             }
@@ -92,7 +92,7 @@
     ],
     "struct_changes": [
         {
-            "key": "testConfig",
+            "key": "",
             "keyword": {
                 "android": "testConfig",
                 "ios": "AgoraTestConfig",
@@ -103,7 +103,7 @@
             "change_desc": "变更的总结",
             "toc_href": "none",
             "parentclass": "none",
-            "platforms": ["ios", "windows"],
+            "platforms": ["all"],
             "navtitle": "Classes",
             "attributes": "class",
             "description": {
@@ -117,9 +117,9 @@
                 "parameters": {
                     "android": [
                         {
-                            "name": "reason",
+                            "name": "information",
                             "type": "",
-                            "desc": "",
+                            "desc": "this is a test",
                             "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
@@ -127,7 +127,7 @@
                     ],
                     "ios": [
                         {
-                            "name": "reason",
+                            "name": "AgoraInfo",
                             "type": "",
                             "desc": "",
                             "change_type": "modify",
@@ -137,7 +137,7 @@
                     ],
                     "windows": [
                         {
-                            "name": "reason",
+                            "name": "INFORMATION",
                             "type": "",
                             "desc": "",
                             "change_type": "modify",
@@ -147,7 +147,7 @@
                     ],
                     "macos": [
                         {
-                            "name": "reason",
+                            "name": "AgoraInfo",
                             "type": "",
                             "desc": "",
                             "change_type": "modify",
@@ -167,7 +167,7 @@
     ],
     "enum_changes": [
         {
-            "key": "SAMPLE_ENUM",
+            "key": "",
             "change_type": "modify",
             "change_desc": "变更的总结",
             "keyword": {
@@ -193,16 +193,28 @@
                     "windows": [
                         {
                             "alias": "SAMPLE_ENUM_1",
-                            "value": "the prototype of windows enum1",
+                            "value": "SAMPLE_ENUM_1",
                             "desc": "description of the enumeration",
                             "change_type": "modify",
                             "old_value": "",
                             "new_value": ""
                         }
                     ],
-                    "ios": [
+                    "ios":
+                    [
                         {
                             "alias": "SAMPLE_ENUM_1",
+                            "value": "AgoraSampleEnum1",
+                            "desc": "description of the enumeration",
+                            "change_type": "modify",
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ],
+                    "macos":
+                    [
+                        {
+                            "alias": "DEVICE_TYPE_VIDEO",
                             "value": "AgoraSampleEnum1",
                             "desc": "description of the enumeration",
                             "change_type": "modify",

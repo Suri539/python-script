@@ -44,7 +44,7 @@ platform_configs = [
 ]
 
 # 获取基础目录路径
-base_dir = '/Users/admin/Documents/python-script/Dita-Automation-Scripts/dita'
+base_dir = 'E:/AgoraTWrepo/python-script/Dita-Automation-Scripts/dita'
 
 # 读取 JSON 数据
 with open('data.json', 'r', encoding='utf-8') as file:
@@ -75,14 +75,8 @@ def get_platform_prop(platform, platform_configs):
             return config['platform3']
     return platform
 
-def update_parameters_section(parameters_section, params_data, platform, platform_configs):
+def update_parameters_section(parameters_section, platform_configs, dita_params):
     """更新参数部分"""
-    if not params_data or platform not in params_data:
-        return
-
-    platform_prop = get_platform_prop(platform, platform_configs)
-    existing_params = {}
-
     # 找到 parml 元素
     parml = parameters_section.find('parml')
     if parml is None:
@@ -93,90 +87,77 @@ def update_parameters_section(parameters_section, params_data, platform, platfor
             if not empty_plentry.findall('pt') or not empty_plentry.findall('pd'):
                 parml.remove(empty_plentry)
             else:
-                # 检查 pt 和 pd 是否为空（没有文本内容）
                 pts = empty_plentry.findall('pt')
                 pds = empty_plentry.findall('pd')
                 if all(not pt.text for pt in pts) and all(not pd.text for pd in pds):
                     parml.remove(empty_plentry)
-
+    
     # 添加换行和缩进
-    parml.text = '\n            '  # parml 后的首次换行
-
-    # 收集现有参数信息
-    for plentry in parml.findall('plentry'):
-        pts = plentry.findall('pt')
-        for pt in pts:
-            name = pt.text
-            if name:  # 只处理非空参数名
-                existing_params[name] = plentry
-
-        # 为现有的 plentry 添加合适的缩进
+    parml.text = '\n            '
+    
+    # 处理每个参数
+    for param in dita_params:
+        # 获取支持的平台列表并转换为 platform3
+        platform_props = []
+        for p in param['platforms']:
+            platform_prop = get_platform_prop(p, platform_configs)
+            if platform_prop:
+                platform_props.append(platform_prop)
+        
+        # 创建 plentry
+        plentry = etree.SubElement(parml, 'plentry')
+        plentry.set('props', ' '.join(platform_props))
+        plentry.text = '\n                '
         plentry.tail = '\n            '
-        for elem in plentry:
-            elem.tail = '\n                '
-        # 最后一个元素的 tail 需要调整缩进级别
+        
+        # 添加通用参数名
+        pt = etree.SubElement(plentry, 'pt')
+        pt.text = param['name']
+        pt.tail = '\n                '
+        
+        # 处理平台特定的参数名
+        if 'platform_only_name' in param:
+            # 按参数名分组平台
+            name_platforms = {}
+            for p, name in param['platform_only_name'].items():
+                platform_prop = get_platform_prop(p, platform_configs)
+                if name not in name_platforms:
+                    name_platforms[name] = []
+                name_platforms[name].append(platform_prop)
+            
+            # 为每组创建 pt
+            for name, props in name_platforms.items():
+                pt = etree.SubElement(plentry, 'pt')
+                pt.text = name
+                pt.set('props', ' '.join(props))
+                pt.tail = '\n                '
+        
+        # 添加通用描述
+        pd = etree.SubElement(plentry, 'pd')
+        pd.text = param['desc']
+        pd.tail = '\n                '
+        
+        # 处理平台特定的描述
+        if 'platform_only_desc' in param:
+            # 按描述分组平台
+            desc_platforms = {}
+            for p, desc in param['platform_only_desc'].items():
+                platform_prop = get_platform_prop(p, platform_configs)
+                if desc not in desc_platforms:
+                    desc_platforms[desc] = []
+                desc_platforms[desc].append(platform_prop)
+            
+            # 为每组创建 pd
+            for desc, props in desc_platforms.items():
+                pd = etree.SubElement(plentry, 'pd')
+                pd.text = desc
+                pd.set('props', ' '.join(props))
+                pd.tail = '\n                '
+        
+        # 调整最后一个元素的缩进
         if len(plentry) > 0:
             plentry[-1].tail = '\n            '
-
-    # 处理新参数
-    for param in params_data[platform]:
-        if param['change_type'] != 'create':
-            continue
-
-        param_name = param['name']
-        param_desc = param['desc']
-
-        if param_name in existing_params:
-            # 更新现有参数
-            plentry = existing_params[param_name]
-            pt_found = False
-            pd_found = False
-
-            for pt in plentry.findall('pt'):
-                if pt.text == param_name:
-                    props = pt.get('props', '').split()
-                    if platform_prop not in props:
-                        props.append(platform_prop)
-                        pt.set('props', ' '.join(props))
-                    pt_found = True
-
-            for pd in plentry.findall('pd'):
-                if pd.text == param_desc:
-                    props = pd.get('props', '').split()
-                    if platform_prop not in props:
-                        props.append(platform_prop)
-                        pd.set('props', ' '.join(props))
-                    pd_found = True
-
-            if not pt_found:
-                new_pt = etree.SubElement(plentry, 'pt')
-                new_pt.text = param_name
-                new_pt.set('props', platform_prop)
-                new_pt.tail = '\n                '
-
-            if not pd_found:
-                new_pd = etree.SubElement(plentry, 'pd')
-                new_pd.text = param_desc
-                new_pd.set('props', platform_prop)
-                new_pd.tail = '\n            '
-        else:
-            # 创建新参数
-            plentry = etree.SubElement(parml, 'plentry')
-            plentry.text = '\n                '
-            plentry.tail = '\n            '
-
-            pt = etree.SubElement(plentry, 'pt')
-            pt.text = param_name
-            pt.set('props', platform_prop)
-            pt.tail = '\n                '
-
-            pd = etree.SubElement(plentry, 'pd')
-            pd.text = param_desc
-            pd.set('props', platform_prop)
-            pd.tail = '\n            '
-
-            existing_params[param_name] = plentry
-
+    
     # 调整最后一个 plentry 的缩进
     if len(parml) > 0:
         parml[-1].tail = '\n        '
@@ -253,19 +234,35 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-
+        
         # 更新 since 版本
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+        if 'detailed_desc' in desc:
             dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc'][0]:
-                dd.text = f"v{desc['detailed_desc'][0]['since']}"
-
-        # 更新描述
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+            if dd is not None and 'since' in desc['detailed_desc']:
+                dd.text = f"v{desc['detailed_desc']['since']}"
+        
+        # 更新通用描述
+        if 'detailed_desc' in desc:
             p = detailed_desc_section.find('p')
-            if p is not None and 'desc' in desc['detailed_desc'][0]:
-                p.text = desc['detailed_desc'][0]['desc']
-
+            if p is not None and 'desc' in desc['detailed_desc']:
+                p.text = desc['detailed_desc']['desc']
+                p.tail = '\n            '
+                
+                # 处理平台特定的描述
+                if 'platform_only_desc' in desc:
+                    desc_platforms = {}
+                    for platform, platform_desc in desc['platform_only_desc'].items():
+                        platform_prop = get_platform_prop(platform, platform_configs)
+                        if platform_desc not in desc_platforms:
+                            desc_platforms[platform_desc] = []
+                        desc_platforms[platform_desc].append(platform_prop)
+                    
+                    for platform_desc, props in desc_platforms.items():
+                        platform_p = etree.SubElement(detailed_desc_section, 'p')
+                        platform_p.text = platform_desc
+                        platform_p.set('props', ' '.join(props))
+                        platform_p.tail = '\n            '
+    
     # 4. 更新调用限制和相关回调
     desc = change_item.get('description', {})
 
@@ -312,12 +309,48 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
                 section.text = desc[json_field]
 
     # 更新参数部分
-    if 'parameters' in desc:
-        parameters_section = root.find('.//section[@id="parameters"]')
-        if parameters_section is not None:
-            for platform in desc['parameters'].keys():
-                update_parameters_section(parameters_section, desc['parameters'], platform, platform_configs)
-
+    parameters_section = root.find('.//section[@id="parameters"]')
+    if parameters_section is not None and 'dita_params' in change_item.get('description', {}):
+        update_parameters_section(parameters_section, platform_configs, 
+                               change_item['description']['dita_params'])
+    
+    # 更新返回值部分
+    return_values_section = root.find('.//section[@id="return_values"]')
+    if return_values_section is not None:
+        desc = change_item.get('description', {})
+        if 'return_values' in desc:
+            # 找到目标 ul 元素
+            ul = return_values_section.find('ul[@props="native unreal bp electron unity rn cs"]')
+            if ul is not None:
+                # 按返回值描述分组平台
+                desc_platforms = {}
+                for platform, return_desc in desc['return_values'].items():
+                    platform_prop = get_platform_prop(platform, platform_configs)
+                    if return_desc not in desc_platforms:
+                        desc_platforms[return_desc] = []
+                    desc_platforms[return_desc].append(platform_prop)
+                
+                # 确保 ul 有正确的缩进
+                ul.text = '\n                '
+                
+                # 为每组创建新的 li 元素
+                for return_desc, props in desc_platforms.items():
+                    li = etree.SubElement(ul, 'li')
+                    li.text = return_desc
+                    li.set('props', ' '.join(props))
+                    li.tail = '\n                '
+                
+                # 调整所有 li 的缩进
+                for li in ul.findall('li'):
+                    li.tail = '\n                '
+                
+                # 最后一个 li 的缩进需要特殊处理
+                if len(ul) > 0:
+                    ul[-1].tail = '\n            '
+                
+                # 调整 ul 的缩进
+                ul.tail = '\n        '
+    
     # 获取描述相关字段
     desc = change_item.get('description', {})
 
@@ -577,10 +610,8 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
         parameters_section = root.find('.//section[@id="parameters"]')
         if parameters_section is not None:
             for platform in change_item['description']['parameters']:
-                update_parameters_section(parameters_section,
-                                       change_item['description']['parameters'],
-                                       platform,
-                                       platform_configs)
+                update_parameters_section(parameters_section, platform_configs, 
+                                       change_item['description']['parameters'])
 
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
@@ -1316,11 +1347,11 @@ def insert_relations(relations_path):
                 for relcell in relrow.findall('relcell'):
                     for topicref in relcell.findall('topicref'):
                         if topicref.get('keyref') == parentclass:
-                            # 检查是否有任何 props 属性
+                            # 检查父节点是否有 props="hide" 属性
                             for ancestor in topicref.iterancestors():
-                                if ancestor.get('props') is not None:
+                                if ancestor.get('props') == 'hide':
                                     has_props = True
-                                    print(f"Skipping API {key} as its parent has props attribute")
+                                    print(f"Skipping API {key} as its parent has props='hide' attribute")
                                     break
 
                             if has_props:
@@ -1426,46 +1457,42 @@ def insert_datatype(datatype_path):
             for prop in props:
                 # 查找或创建对应平台的 ul
                 ul = section.find(f"ul[@props='{prop}']")
-                if ul is None:
-                    ul = etree.SubElement(section, 'ul')
-                    ul.set('props', prop)
-                    ul.tail = '\n            '
+                if ul is not None:
+                    # 检查是否已存在相同的 xref
+                    exists = False
+                    for li in ul.findall('li'):
+                        xref = li.find('xref')
+                        if xref is not None and xref.get('keyref') == change_item['key']:
+                            exists = True
+                            break
 
-                # 检查是否已存在相同的 xref
-                exists = False
-                for li in ul.findall('li'):
-                    xref = li.find('xref')
-                    if xref is not None and xref.get('keyref') == change_item['key']:
-                        exists = True
-                        break
+                    if not exists:
+                        # 创建新的 li 和 xref 元素
+                        new_li = etree.SubElement(ul, 'li')
+                        new_xref = etree.SubElement(new_li, 'xref')
+                        new_xref.set('keyref', change_item['key'])
 
-                if not exists:
-                    # 创建新的 li 和 xref 元素
-                    new_li = etree.SubElement(ul, 'li')
-                    new_xref = etree.SubElement(new_li, 'xref')
-                    new_xref.set('keyref', change_item['key'])
+                        # 设置缩进
+                        new_li.tail = '\n            '
 
-                    # 设置缩进
-                    new_li.tail = '\n            '
+                        changes_in_api += 1
+                        print(f"添加了 {change_item['key']} 到 {prop} 平台的 {section_id} 部分")
 
-                    changes_in_api += 1
-                    print(f"添加了 {change_item['key']} 到 {prop} 平台的 {section_id} 部分")
+                        # 对 li 元素进行排序
+                        lis = ul.findall('li')
+                        sorted_lis = sorted(lis, key=lambda x: x.find('xref').get('keyref', ''))
 
-                    # 对 li 元素进行排序
-                    lis = ul.findall('li')
-                    sorted_lis = sorted(lis, key=lambda x: x.find('xref').get('keyref', ''))
+                        # 清空 ul
+                        for child in list(ul):
+                            ul.remove(child)
 
-                    # 清空 ul
-                    for child in list(ul):
-                        ul.remove(child)
-
-                    # 重新按顺序添加元素
-                    for i, li in enumerate(sorted_lis):
-                        if i < len(sorted_lis) - 1:
-                            li.tail = '\n            '
-                        else:
-                            li.tail = '\n        '
-                        ul.append(li)
+                        # 重新按顺序添加元素
+                        for i, li in enumerate(sorted_lis):
+                            if i < len(sorted_lis) - 1:
+                                li.tail = '\n            '
+                            else:
+                                li.tail = '\n        '
+                            ul.append(li)
 
             changes_made += changes_in_api
 

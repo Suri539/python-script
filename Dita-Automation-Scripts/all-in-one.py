@@ -586,18 +586,34 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-
+        
         # 更新 since 版本
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+        if 'detailed_desc' in desc:
             dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc'][0]:
-                dd.text = f"v{desc['detailed_desc'][0]['since']}"
-
-        # 更新描述
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+            if dd is not None and 'since' in desc['detailed_desc']:
+                dd.text = f"v{desc['detailed_desc']['since']}"
+        
+        # 更新通用描述
+        if 'detailed_desc' in desc:
             p = detailed_desc_section.find('p')
-            if p is not None and 'desc' in desc['detailed_desc'][0]:
-                p.text = desc['detailed_desc'][0]['desc']
+            if p is not None and 'desc' in desc['detailed_desc']:
+                p.text = desc['detailed_desc']['desc']
+                p.tail = '\n            '
+                
+                # 处理平台特定的描述
+                if 'platform_only_desc' in desc:
+                    desc_platforms = {}
+                    for platform, platform_desc in desc['platform_only_desc'].items():
+                        platform_prop = get_platform_prop(platform, platform_configs)
+                        if platform_desc not in desc_platforms:
+                            desc_platforms[platform_desc] = []
+                        desc_platforms[platform_desc].append(platform_prop)
+                    
+                    for platform_desc, props in desc_platforms.items():
+                        platform_p = etree.SubElement(detailed_desc_section, 'p')
+                        platform_p.text = platform_desc
+                        platform_p.set('props', ' '.join(props))
+                        platform_p.tail = '\n            '
 
     # 删除 sub-class 和 sub-method sections
     for section_id in ['sub-class', 'sub-method']:
@@ -606,12 +622,47 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
             section.getparent().remove(section)
 
     # 更新参数部分
-    if 'parameters' in change_item.get('description', {}):
-        parameters_section = root.find('.//section[@id="parameters"]')
-        if parameters_section is not None:
-            for platform in change_item['description']['parameters']:
-                update_parameters_section(parameters_section, platform_configs, 
-                                       change_item['description']['parameters'])
+    parameters_section = root.find('.//section[@id="parameters"]')
+    if parameters_section is not None and 'dita_params' in change_item.get('description', {}):
+        update_parameters_section(parameters_section, platform_configs, 
+                               change_item['description']['dita_params'])
+
+    # 更新返回值部分
+    return_values_section = root.find('.//section[@id="return_values"]')
+    if return_values_section is not None:
+        desc = change_item.get('description', {})
+        if 'return_values' in desc:
+            # 找到目标 ul 元素
+            ul = return_values_section.find('ul[@props="native unreal bp electron unity rn cs"]')
+            if ul is not None:
+                # 按返回值描述分组平台
+                desc_platforms = {}
+                for platform, return_desc in desc['return_values'].items():
+                    platform_prop = get_platform_prop(platform, platform_configs)
+                    if return_desc not in desc_platforms:
+                        desc_platforms[return_desc] = []
+                    desc_platforms[return_desc].append(platform_prop)
+                
+                # 确保 ul 有正确的缩进
+                ul.text = '\n                '
+                
+                # 为每组创建新的 li 元素
+                for return_desc, props in desc_platforms.items():
+                    li = etree.SubElement(ul, 'li')
+                    li.text = return_desc
+                    li.set('props', ' '.join(props))
+                    li.tail = '\n                '
+                
+                # 调整所有 li 的缩进
+                for li in ul.findall('li'):
+                    li.tail = '\n                '
+                
+                # 最后一个 li 的缩进需要特殊处理
+                if len(ul) > 0:
+                    ul[-1].tail = '\n            '
+                
+                # 调整 ul 的缩进
+                ul.tail = '\n        '
 
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)

@@ -912,6 +912,12 @@ def parse_ditamap(ditamap_path, platform_apis):
         # 查找目标位置并添加新的 topicref
         for topicref in root.iter('topicref'):
             if topicref.get('href') == target_href:
+                # Check if the keyref already exists
+                existing_keyrefs = [child.get('keyref') for child in topicref if child.tag == 'topicref']
+                if api_key in existing_keyrefs:
+                    success_messages.append(f"Skipping API with key '{api_key}' as it already exists under {target_href}")
+                    continue
+
                 # 获取当前 topicref 的缩进级别
                 current_indent = ''
                 parent = topicref

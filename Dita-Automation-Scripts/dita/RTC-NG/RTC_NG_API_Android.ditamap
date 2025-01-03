@@ -89,7 +89,6 @@
             <topicref keyref="preloadChannelWithUserAccount" toc="no"/>
             <topicref keyref="registerLocalUserAccount" toc="no"/>
             <topicref keyref="renewToken" toc="no"/>
-            <topicref keyref="sampleApi" toc="no"/>
             <topicref keyref="setChannelProfile" toc="no"/>
             <topicref keyref="setClientRole1" toc="no"/>
             <topicref keyref="setClientRole2" toc="no"/>

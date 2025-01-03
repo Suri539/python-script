@@ -355,7 +355,7 @@ def process_enum_change(change_item, templates, platform_configs):
         return
         
     # 处理文件名：删除连字符并转换为小写
-    enum_key = change_item['key'].replace('-', '').lower()
+    enum_key = change_item['key'].replace('_', '').lower()
     file_name = f"enum_{enum_key}.dita"
     full_file_path = os.path.join(new_file_path, file_name)
     

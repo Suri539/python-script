@@ -400,20 +400,20 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
     """处理单个枚举变更"""
     if change_item['change_type'] != 'create':
         return
-
+        
     # 处理文件名：删除连字符并转换为小写
     enum_key = change_item['key'].replace('_', '').lower()
     file_name = f"enum_{enum_key}.dita"
     full_file_path = os.path.join(new_file_path, file_name)
-
+    
     # 创建文件，如果文件已存在则返回
     if not create_dita_file(templates['enum'], full_file_path):
         return
-
+    
     # 解析并更新文件
     tree = etree.parse(full_file_path)
     root = tree.getroot()
-
+    
     # 更新各个字段，添加错误检查
     if root.tag != 'reference':
         print(f"错误：根元素不是 reference，而是 {root.tag}")
@@ -465,76 +465,53 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
             parml = enums_section.find('parml')
             if parml is None:
                 parml = etree.SubElement(enums_section, 'parml')
-
+            
             # 清除模板中的空 plentry
             for empty_plentry in parml.findall('plentry'):
-                if not empty_plentry.findall('pt') or not empty_plentry.findall('pd'):
-                    parml.remove(empty_plentry)
-                else:
-                    pts = empty_plentry.findall('pt')
-                    pds = empty_plentry.findall('pd')
-                    if all(not pt.text for pt in pts) and all(not pd.text for pd in pds):
-                        parml.remove(empty_plentry)
-
+                parml.remove(empty_plentry)
+            
             # 添加换行和缩进
             parml.text = '\n            '
-
-            # 按 alias 组织枚举值
+            
+            # 按 alias 分组枚举值
             enum_groups = {}
             for platform, enums in change_item['description']['enumerations'].items():
                 platform_prop = get_platform_prop(platform, platform_configs)
                 for enum in enums:
                     if enum['change_type'] != 'create':
                         continue
-
+                    
                     alias = enum['alias']
                     if alias not in enum_groups:
-                        enum_groups[alias] = {}
-
-                    if platform not in enum_groups[alias]:
-                        enum_groups[alias][platform] = {
-                            'value': enum['value'],
-                            'desc': enum['desc'],
-                            'platform_prop': platform_prop
+                        enum_groups[alias] = {
+                            'platforms': [],
+                            'desc': enum['desc']
                         }
-
-            # 创建枚举值条目
-            for alias, platforms in enum_groups.items():
+                    enum_groups[alias]['platforms'].append(platform_prop)
+            
+            # 为每组创建 plentry
+            for alias, info in enum_groups.items():
                 plentry = etree.SubElement(parml, 'plentry')
+                plentry.set('props', ' '.join(sorted(set(info['platforms']))))
                 plentry.text = '\n                '
                 plentry.tail = '\n            '
-
-                # 收集所有平台的值和描述
-                values = {}
-                descs = {}
-                platform_props = set()
-
-                for platform, info in platforms.items():
-                    values[info['value']] = info['platform_prop']
-                    descs[info['desc']] = info['platform_prop']
-                    platform_props.add(info['platform_prop'])
-
-                # 先创建所有的 pt 元素
-                for value, prop in values.items():
-                    pt = etree.SubElement(plentry, 'pt')
-                    pt.text = value
-                    pt.set('props', prop)
-                    pt.tail = '\n                '
-
-                # 再创建 pd 元素
-                for desc in set(info['desc'] for info in platforms.values()):
-                    pd = etree.SubElement(plentry, 'pd')
-                    pd.text = desc
-                    pd.set('props', ' '.join(platform_props))
-                    pd.tail = '\n            '
-
-                # 调整最后一个元素的缩进
-                if len(plentry) > 0:
-                    plentry[-1].tail = '\n            '
-
-            # 调整 parml 的缩进
-            parml.tail = '\n        '
-
+                
+                # 创建 pt 带 ph keyref
+                pt = etree.SubElement(plentry, 'pt')
+                ph = etree.SubElement(pt, 'ph')
+                ph.set('keyref', alias)
+                pt.tail = '\n                '
+                
+                # 创建 pd
+                pd = etree.SubElement(plentry, 'pd')
+                pd.text = info['desc']
+                pd.set('props', ' '.join(sorted(set(info['platforms']))))
+                pd.tail = '\n            '
+            
+            # 调整最后一个 plentry 的缩进
+            if len(parml) > 0:
+                parml[-1].tail = '\n        '
+    
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 

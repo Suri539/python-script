@@ -33,10 +33,10 @@ PLATFORM_TO_KEYSMAP = {
 
 # 定义平台配置
 platform_configs = [
+    {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP', 'platform3': 'cpp'},
     {'platform': 'android', 'platform1': 'java', 'platform2': 'Android', 'platform3': 'android'},
     {'platform': 'ios', 'platform1': 'ios', 'platform2': 'iOS', 'platform3': 'ios'},
     {'platform': 'macos', 'platform1': 'macos', 'platform2': 'macOS', 'platform3': 'mac'},
-    {'platform': 'windows', 'platform1': 'cpp', 'platform2': 'CPP', 'platform3': 'cpp'},
     {'platform': 'flutter', 'platform1': 'flutter', 'platform2': 'Flutter', 'platform3': 'flutter'},
     {'platform': 'unity', 'platform1': 'unity', 'platform2': 'Unity', 'platform3': 'unity'},
     {'platform': 'electron', 'platform1': 'electron', 'platform2': 'Electron', 'platform3': 'electron'},
@@ -162,7 +162,7 @@ def update_parameters_section(parameters_section, platform_configs, dita_params)
     if len(parml) > 0:
         parml[-1].tail = '\n        '
 
-def process_api_change(change_item, templates, platform_configs, new_file_path):
+def process_api_change(change_item, templates, platform_configs, new_file_path, base_dir):
     """处理单个 API 变更"""
     if change_item['change_type'] != 'create':
         return
@@ -393,10 +393,13 @@ def process_api_change(change_item, templates, platform_configs, new_file_path):
         else:
             restriction_section.text = restriction_content
 
+    # 在保存文件之前，处理 markdown 代码格式
+    convert_markdown_code_to_dita_tags(root, base_dir, platform_configs)
+    
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
-def process_enum_change(change_item, templates, platform_configs, new_file_path):
+def process_enum_change(change_item, templates, platform_configs, new_file_path, keysmap_file):
     """处理单个枚举变更"""
     if change_item['change_type'] != 'create':
         return
@@ -512,10 +515,13 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path)
             if len(parml) > 0:
                 parml[-1].tail = '\n        '
     
+    # 在保存文件之前，处理 markdown 代码格式
+    convert_markdown_code_to_dita_tags(root, keysmap_file)
+    
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
-def process_class_change(change_item, templates, platform_configs, new_file_path):
+def process_class_change(change_item, templates, platform_configs, new_file_path, keysmap_file):
     """处理单个类变更"""
     if change_item['change_type'] != 'create':
         return
@@ -641,10 +647,13 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
                 # 调整 ul 的缩进
                 ul.tail = '\n        '
 
+    # 在保存文件之前，处理 markdown 代码格式
+    convert_markdown_code_to_dita_tags(root, keysmap_file)
+    
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
-def create_dita_files(json_file_path, templates, platform_configs, new_file_path):
+def create_dita_files(json_file_path, templates, platform_configs, new_file_path, base_dir):
     """创建 DITA 文件的主函数"""
     print(f"尝试读取文件：{json_file_path}")
     try:
@@ -695,7 +704,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         print("\n开始处理 API 变更...")
         for change in create_apis:
             try:
-                process_api_change(change, templates, platform_configs, new_file_path)
+                process_api_change(change, templates, platform_configs, new_file_path, base_dir)
             except Exception as e:
                 print(f"处理 API {change.get('key', '未知')} 时出错：{str(e)}")
 
@@ -703,7 +712,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         print("\n开始处理枚举变更...")
         for change in create_enums:
             try:
-                process_enum_change(change, templates, platform_configs, new_file_path)
+                process_enum_change(change, templates, platform_configs, new_file_path, keysmap_file)
             except Exception as e:
                 print(f"处理枚举 {change.get('key', '未知')} 时出错：{str(e)}")
 
@@ -711,7 +720,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         print("\n开始处理类变更...")
         for change in create_structs:
             try:
-                process_class_change(change, templates, platform_configs, new_file_path)
+                process_class_change(change, templates, platform_configs, new_file_path, keysmap_file)
             except Exception as e:
                 print(f"处理类 {change.get('key', '未知')} 时出错：{str(e)}")
 
@@ -1531,8 +1540,107 @@ def insert_datatype(datatype_path):
     else:
         print(f"未对 {datatype_path} 进行任何修改")
 
-def main():
+def load_platform_keysmap(keysmap_file):
+    """加载单个平台的 keysmap 文件
+    
+    Args:
+        keysmap_file: keysmap 文件路径
+    
+    Returns:
+        tuple: (keyword_to_key, key_to_href)
+    """
+    keyword_to_key = {}
+    key_to_href = {}
+    
+    try:
+        tree = etree.parse(keysmap_file)
+        for keydef in tree.findall('.//keydef'):
+            # 跳过带有 hide 或 source 属性的 keydef
+            if keydef.get('props') in ['hide', 'source']:
+                continue
+                
+            key = keydef.get('keys')
+            href = keydef.get('href')
+            
+            # 如果有 href，记录到 key_to_href
+            if href:
+                key_to_href[key] = href
+            
+            # 获取所有的 keyword
+            for keyword in keydef.findall('.//keyword'):
+                if keyword.text:
+                    keyword_to_key[keyword.text] = key
+        
+        return keyword_to_key, key_to_href
+    except Exception as e:
+        print(f"加载 keysmap 文件时出错：{str(e)}")
+        return {}, {}
 
+def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
+    """将 dita 中的 markdown 代码格式转换为 dita 标签"""
+    # 按平台顺序加载所有 keysmap
+    platform_keysmaps = []
+    for config in platform_configs:
+        keysmap_file = os.path.join(base_dir, f'RTC-NG/config/keys-rtc-ng-api-{config["platform1"]}.ditamap')
+        if os.path.exists(keysmap_file):
+            keyword_to_key, key_to_href = load_platform_keysmap(keysmap_file)
+            platform_keysmaps.append({
+                'platform': config['platform'],
+                'keyword_to_key': keyword_to_key,
+                'key_to_href': key_to_href
+            })
+    
+    # 需要检查的标签
+    tags_to_check = ['p', 'ph', 'pd', 'li']
+    
+    # 查找所有需要检查的标签
+    for tag in tags_to_check:
+        elements = root.findall(f'.//{tag}')
+        for element in elements:
+            if element.text:
+                # 使用正则表达式查找所有 markdown 代码格式的内容
+                matches = list(re.finditer(r'`([^`]+)`', element.text))
+                
+                if matches:
+                    # 从后向前处理，以保持位置索引的准确性
+                    for match in reversed(matches):
+                        start, end = match.span()
+                        code_content = match.group(1)
+                        
+                        # 在所有平台的 keysmap 中查找匹配
+                        found_match = False
+                        for platform_keysmap in platform_keysmaps:
+                            if code_content in platform_keysmap['keyword_to_key']:
+                                key = platform_keysmap['keyword_to_key'][code_content]
+                                # 使用第一个找到的平台的 href 信息
+                                if key in platform_keysmap['key_to_href']:
+                                    new_elem = etree.Element('xref')
+                                    new_elem.set('keyref', key)
+                                else:
+                                    new_elem = etree.Element('ph')
+                                    new_elem.set('keyref', key)
+                                found_match = True
+                                break
+                        
+                        if not found_match:
+                            # 如果在所有平台都没找到匹配，使用 codeph
+                            new_elem = etree.Element('codeph')
+                            new_elem.text = code_content
+                        
+                        # 分割文本并插入新元素
+                        if end < len(element.text):
+                            new_elem.tail = element.text[end:]
+                        
+                        # 更新元素的文本
+                        element.text = element.text[:start]
+                        
+                        # 将新元素插入为第一个子元素
+                        if len(element) > 0:
+                            element.insert(0, new_elem)
+                        else:
+                            element.append(new_elem)
+
+def main():
     # 定义模板文件路径
     templates = {
         'method': os.path.join(base_dir, 'templates-cn/RTC/Method.dita'),
@@ -1555,7 +1663,7 @@ def main():
 
     try:
         # 创建新的 DITA 文件
-        create_dita_files(json_file_path, templates, platform_configs, new_file_path)
+        create_dita_files(json_file_path, templates, platform_configs, new_file_path, base_dir)
 
         process_all_ditamaps()
         parse_keysmaps()

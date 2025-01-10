@@ -75,6 +75,60 @@ def get_platform_prop(platform, platform_configs):
             return config['platform3']
     return platform
 
+def process_parameter_description(desc_text):
+    """处理参数描述，转换单行文本中的列表为 DITA ul/li 结构"""
+    print(f"\n调试: 处理描述文本:")
+    print(f"原始文本: {desc_text}")
+    
+    # 使用正则表达式分割文本
+    # 匹配模式：查找以 "- " 开头的部分，但保留前面的普通文本
+    parts = re.split(r'(?=- )', desc_text.strip())
+    
+    # 检查是否包含列表（是否有以 "- " 开头的部分）
+    has_list = any(part.startswith('- ') for part in parts)
+    print(f"是否包含列表: {has_list}")
+    print(f"分割后的部分数: {len(parts)}")
+    for i, part in enumerate(parts):
+        print(f"部分 {i+1}: '{part.strip()}'")
+    
+    if not has_list:
+        print("未检测到列表，返回原始文本")
+        return False, desc_text
+    
+    print("检测到列表，开始处理...")
+    
+    # 创建基础元素
+    pd = etree.Element('pd')
+    
+    # 处理开头的普通文本（第一部分如果不是以 "- " 开头）
+    if not parts[0].startswith('- '):
+        pd.text = parts[0].strip() + '\n                    '
+        print(f"添加开头文本: {parts[0].strip()}")
+        parts = parts[1:]  # 移除已处理的部分
+    
+    # 创建 ul 元素
+    ul = etree.SubElement(pd, 'ul')
+    ul.text = '\n                        '
+    ul.tail = '\n                    '
+    
+    # 处理每个列表项
+    for part in parts:
+        if part.startswith('- '):
+            print(f"处理列表项: {part}")
+            li = etree.SubElement(ul, 'li')
+            li.text = part[2:].strip()  # 移除 "- " 前缀
+            li.tail = '\n                        '
+    
+    # 调整最后一个 li 的缩进
+    if len(ul) > 0:
+        ul[-1].tail = '\n                    '
+    
+    # 打印生成的 XML
+    print("\n生成的 XML:")
+    print(etree.tostring(pd, encoding='unicode', pretty_print=True))
+    
+    return True, pd
+
 def update_parameters_section(parameters_section, platform_configs, dita_params):
     """更新参数部分"""
     # 找到 parml 元素
@@ -115,43 +169,37 @@ def update_parameters_section(parameters_section, platform_configs, dita_params)
         pt.text = param['name']
         pt.tail = '\n                '
         
-        # 处理平台特定的参数名
-        if 'platform_only_name' in param:
-            # 按参数名分组平台
-            name_platforms = {}
-            for p, name in param['platform_only_name'].items():
-                platform_prop = get_platform_prop(p, platform_configs)
-                if name not in name_platforms:
-                    name_platforms[name] = []
-                name_platforms[name].append(platform_prop)
-            
-            # 为每组创建 pt
-            for name, props in name_platforms.items():
-                pt = etree.SubElement(plentry, 'pt')
-                pt.text = name
-                pt.set('props', ' '.join(props))
-                pt.tail = '\n                '
-        
         # 添加通用描述
-        pd = etree.SubElement(plentry, 'pd')
-        pd.text = param['desc']
+        has_list, pd_content = process_parameter_description(param['desc'])
+        if has_list:
+            # 如果描述包含列表，直接添加处理好的 pd 元素
+            pd = pd_content
+            plentry.append(pd)
+        else:
+            # 如果是普通文本，创建简单的 pd 元素
+            pd = etree.SubElement(plentry, 'pd')
+            pd.text = pd_content
         pd.tail = '\n                '
         
         # 处理平台特定的描述
         if 'platform_only_desc' in param:
-            # 按描述分组平台
-            desc_platforms = {}
             for p, desc in param['platform_only_desc'].items():
+                # 获取平台属性
                 platform_prop = get_platform_prop(p, platform_configs)
-                if desc not in desc_platforms:
-                    desc_platforms[desc] = []
-                desc_platforms[desc].append(platform_prop)
-            
-            # 为每组创建 pd
-            for desc, props in desc_platforms.items():
-                pd = etree.SubElement(plentry, 'pd')
-                pd.text = desc
-                pd.set('props', ' '.join(props))
+                props = [platform_prop] if platform_prop else []
+                
+                # 处理平台特定描述中的列表
+                has_list, pd_content = process_parameter_description(desc)
+                if has_list:
+                    # 如果包含列表，使用处理好的 pd 元素
+                    pd = pd_content
+                    pd.set('props', ' '.join(props))
+                    plentry.append(pd)
+                else:
+                    # 如果是普通文本，创建简单的 pd 元素
+                    pd = etree.SubElement(plentry, 'pd')
+                    pd.text = pd_content
+                    pd.set('props', ' '.join(props))
                 pd.tail = '\n                '
         
         # 调整最后一个元素的缩进
@@ -1627,7 +1675,7 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
     # 需要检查的标签
     tags_to_check = ['p', 'ph', 'pd', 'li']
     
-    # 查找所有需要检查的标签
+    # 第一步：处理 markdown 代码格式
     for tag in tags_to_check:
         elements = root.findall(f'.//{tag}')
         for element in elements:
@@ -1673,6 +1721,31 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
                             element.insert(0, new_elem)
                         else:
                             element.append(new_elem)
+    
+    # 第二步：处理特殊关键字的 ph 元素
+    special_keys = ['true', 'false', 'NULL']
+    for ph in root.findall('.//ph'):
+        if ph.get('keyref') in special_keys:
+            # 检查父元素是否已经是 codeph
+            if ph.getparent().tag != 'codeph':
+                # 创建新的 codeph 元素
+                codeph = etree.Element('codeph')
+                
+                # 保存 ph 的 tail
+                tail = ph.tail
+                ph.tail = None
+                
+                # 将原始的 ph 从其父元素中移除
+                parent = ph.getparent()
+                index = parent.index(ph)
+                parent.remove(ph)
+                
+                # 将 ph 添加到新的 codeph 中
+                codeph.append(ph)
+                codeph.tail = tail
+                
+                # 将 codeph 插入到原始位置
+                parent.insert(index, codeph)
 
 def main():
     # 定义模板文件路径

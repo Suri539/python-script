@@ -453,6 +453,10 @@ def process_api_change(change_item, templates, platform_configs, new_file_path, 
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
+def normalize_enum_name(name):
+    """标准化枚举值名称，用于比较"""
+    return name.lower().replace('_', '')
+
 def process_enum_change(change_item, templates, platform_configs, new_file_path, base_dir):
     """处理单个枚举变更"""
     if change_item['change_type'] != 'create':
@@ -530,40 +534,76 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path,
             # 添加换行和缩进
             parml.text = '\n            '
             
-            # 按 alias 分组枚举值
-            enum_groups = {}
+            # 首先获取 windows 平台的枚举值作为基准
+            windows_enums = {}
+            if 'windows' in change_item['description']['enumerations']:
+                for enum in change_item['description']['enumerations']['windows']:
+                    if enum['change_type'] != 'create':
+                        continue
+                    normalized_name = normalize_enum_name(enum['name'])
+                    windows_enums[normalized_name] = {
+                        'original_name': enum['name'],
+                        'platforms': {},
+                        'descs': {}
+                    }
+                    platform_prop = get_platform_prop('windows', platform_configs)
+                    if platform_prop:
+                        windows_enums[normalized_name]['platforms']['windows'] = platform_prop
+                        windows_enums[normalized_name]['descs'][platform_prop] = enum['desc']
+            
+            # 处理其他平台的枚举值
             for platform, enums in change_item['description']['enumerations'].items():
+                if platform == 'windows':
+                    continue
+                
                 platform_prop = get_platform_prop(platform, platform_configs)
+                if not platform_prop:
+                    continue
+                
                 for enum in enums:
                     if enum['change_type'] != 'create':
                         continue
                     
-                    alias = enum['alias']
-                    if alias not in enum_groups:
-                        enum_groups[alias] = {
-                            'platforms': [],
-                            'desc': enum['desc']
-                        }
-                    enum_groups[alias]['platforms'].append(platform_prop)
+                    normalized_name = normalize_enum_name(enum['name'])
+                    # 查找是否匹配 windows 中的枚举值
+                    for windows_norm_name, windows_enum in windows_enums.items():
+                        if normalized_name == windows_norm_name or normalized_name in windows_norm_name or windows_norm_name in normalized_name:
+                            windows_enum['platforms'][platform] = platform_prop
+                            windows_enum['descs'][platform_prop] = enum['desc']
+                            break
             
-            # 为每组创建 plentry
-            for alias, info in enum_groups.items():
+            # 创建 DITA 元素
+            for windows_enum in windows_enums.values():
+                # 创建 plentry
                 plentry = etree.SubElement(parml, 'plentry')
-                plentry.set('props', ' '.join(sorted(set(info['platforms']))))
+                all_platform_props = sorted(set(windows_enum['platforms'].values()))
+                plentry.set('props', ' '.join(all_platform_props))
                 plentry.text = '\n                '
                 plentry.tail = '\n            '
                 
                 # 创建 pt 带 ph keyref
                 pt = etree.SubElement(plentry, 'pt')
                 ph = etree.SubElement(pt, 'ph')
-                ph.set('keyref', alias)
+                ph.set('keyref', windows_enum['original_name'])
                 pt.tail = '\n                '
                 
-                # 创建 pd
-                pd = etree.SubElement(plentry, 'pd')
-                pd.text = info['desc']
-                pd.set('props', ' '.join(sorted(set(info['platforms']))))
-                pd.tail = '\n            '
+                # 按描述内容分组创建 pd
+                desc_groups = {}
+                for platform_prop, desc in windows_enum['descs'].items():
+                    if desc not in desc_groups:
+                        desc_groups[desc] = []
+                    desc_groups[desc].append(platform_prop)
+                
+                # 为每组描述创建 pd
+                for desc, props in desc_groups.items():
+                    pd = etree.SubElement(plentry, 'pd')
+                    pd.text = desc
+                    pd.set('props', ' '.join(sorted(props)))
+                    pd.tail = '\n                '
+                
+                # 调整最后一个 pd 的缩进
+                if len(plentry) > 0:
+                    plentry[-1].tail = '\n            '
             
             # 调整最后一个 plentry 的缩进
             if len(parml) > 0:

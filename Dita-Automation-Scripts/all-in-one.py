@@ -218,10 +218,16 @@ def process_api_change(change_item, templates, platform_configs, new_file_path, 
             # 根据平台找到对应的 codeblock
             if platform == 'windows':
                 codeblock = prototype_section.find('.//codeblock[@props="cpp unreal"]')
+            elif platform == 'unreal':
+                codeblock = prototype_section.find('.//codeblock[@props="cpp unreal"]')
             elif platform == 'macos':
                 codeblock = prototype_section.find('.//codeblock[@props="ios mac"]')
             elif platform == 'ios':
                 codeblock = prototype_section.find('.//codeblock[@props="ios mac"]')
+            elif platform == 'unity':
+                codeblock = prototype_section.find('.//codeblock[@props="unity cs"]')
+            elif platform == 'cs':
+                codeblock = prototype_section.find('.//codeblock[@props="unity cs"]')
             else:
                 codeblock = prototype_section.find(f'.//codeblock[@props="{platform_prop}"]')
 
@@ -399,7 +405,7 @@ def process_api_change(change_item, templates, platform_configs, new_file_path, 
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
-def process_enum_change(change_item, templates, platform_configs, new_file_path, keysmap_file):
+def process_enum_change(change_item, templates, platform_configs, new_file_path, base_dir):
     """处理单个枚举变更"""
     if change_item['change_type'] != 'create':
         return
@@ -516,12 +522,12 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path,
                 parml[-1].tail = '\n        '
     
     # 在保存文件之前，处理 markdown 代码格式
-    convert_markdown_code_to_dita_tags(root, keysmap_file)
+    convert_markdown_code_to_dita_tags(root, base_dir, platform_configs)
     
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
 
-def process_class_change(change_item, templates, platform_configs, new_file_path, keysmap_file):
+def process_class_change(change_item, templates, platform_configs, new_file_path, base_dir):
     """处理单个类变更"""
     if change_item['change_type'] != 'create':
         return
@@ -564,6 +570,34 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
             print(f"成功更新 shortdesc")
     except Exception as e:
         print(f"更新 shortdesc 时出错：{str(e)}")
+
+    # 2. 更新 codeblock
+    prototype_section = root.find('.//section[@id="prototype"]')
+    if prototype_section is not None and 'struct_signature' in change_item:
+        for platform, signature in change_item['struct_signature'].items():
+            # 获取正确的平台属性
+            platform_prop = get_platform_prop(platform, platform_configs)
+
+            # 根据平台找到对应的 codeblock
+            if platform == 'windows':
+                codeblock = prototype_section.find('.//codeblock[@props="cpp unreal"]')
+            elif platform == 'unreal':
+                codeblock = prototype_section.find('.//codeblock[@props="cpp unreal"]')
+            elif platform == 'macos':
+                codeblock = prototype_section.find('.//codeblock[@props="ios mac"]')
+            elif platform == 'ios':
+                codeblock = prototype_section.find('.//codeblock[@props="ios mac"]')
+            elif platform == 'unity':
+                codeblock = prototype_section.find('.//codeblock[@props="unity cs"]')
+            elif platform == 'cs':
+                codeblock = prototype_section.find('.//codeblock[@props="unity cs"]')
+            else:
+                codeblock = prototype_section.find(f'.//codeblock[@props="{platform_prop}"]')
+
+            if codeblock is not None:
+                codeblock.text = signature
+            else:
+                print(f"警告：找不到 {platform} 平台的 codeblock")
 
     # 更新 detailed_desc 部分
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
@@ -648,7 +682,7 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
                 ul.tail = '\n        '
 
     # 在保存文件之前，处理 markdown 代码格式
-    convert_markdown_code_to_dita_tags(root, keysmap_file)
+    convert_markdown_code_to_dita_tags(root, base_dir, platform_configs)
     
     # 保存更新后的文件
     tree.write(full_file_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
@@ -712,7 +746,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         print("\n开始处理枚举变更...")
         for change in create_enums:
             try:
-                process_enum_change(change, templates, platform_configs, new_file_path, keysmap_file)
+                process_enum_change(change, templates, platform_configs, new_file_path, base_dir)
             except Exception as e:
                 print(f"处理枚举 {change.get('key', '未知')} 时出错：{str(e)}")
 
@@ -720,7 +754,7 @@ def create_dita_files(json_file_path, templates, platform_configs, new_file_path
         print("\n开始处理类变更...")
         for change in create_structs:
             try:
-                process_class_change(change, templates, platform_configs, new_file_path, keysmap_file)
+                process_class_change(change, templates, platform_configs, new_file_path, base_dir)
             except Exception as e:
                 print(f"处理类 {change.get('key', '未知')} 时出错：{str(e)}")
 

@@ -52,20 +52,15 @@ with open('data.json', 'r', encoding='utf-8') as file:
 
 def create_dita_file(template_path, new_file_path):
     """创建新的 dita 文件"""
-    # 检查文件是否已存在
-    if os.path.exists(new_file_path):
-        print(f"警告：文件已存在，跳过创建：{new_file_path}")
-        return False
-
     try:
         with open(template_path, 'r', encoding='utf-8') as f:
             content = f.read()
         with open(new_file_path, 'w', encoding='utf-8') as f:
             f.write(content)
-            print(f"成功创建文件：{new_file_path}")
+            print(f"成功{'更新' if os.path.exists(new_file_path) else '创建'}文件：{new_file_path}")
         return True
     except Exception as e:
-        print(f"创建文件时出错：{str(e)}")
+        print(f"{'更新' if os.path.exists(new_file_path) else '创建'}文件时出错：{str(e)}")
         return False
 
 def get_platform_prop(platform, platform_configs):
@@ -74,60 +69,6 @@ def get_platform_prop(platform, platform_configs):
         if config['platform'] == platform:
             return config['platform3']
     return platform
-
-def process_parameter_description(desc_text):
-    """处理参数描述，转换单行文本中的列表为 DITA ul/li 结构"""
-    print(f"\n调试: 处理描述文本:")
-    print(f"原始文本: {desc_text}")
-    
-    # 使用正则表达式分割文本
-    # 匹配模式：查找以 "- " 开头的部分，但保留前面的普通文本
-    parts = re.split(r'(?=- )', desc_text.strip())
-    
-    # 检查是否包含列表（是否有以 "- " 开头的部分）
-    has_list = any(part.startswith('- ') for part in parts)
-    print(f"是否包含列表: {has_list}")
-    print(f"分割后的部分数: {len(parts)}")
-    for i, part in enumerate(parts):
-        print(f"部分 {i+1}: '{part.strip()}'")
-    
-    if not has_list:
-        print("未检测到列表，返回原始文本")
-        return False, desc_text
-    
-    print("检测到列表，开始处理...")
-    
-    # 创建基础元素
-    pd = etree.Element('pd')
-    
-    # 处理开头的普通文本（第一部分如果不是以 "- " 开头）
-    if not parts[0].startswith('- '):
-        pd.text = parts[0].strip() + '\n                    '
-        print(f"添加开头文本: {parts[0].strip()}")
-        parts = parts[1:]  # 移除已处理的部分
-    
-    # 创建 ul 元素
-    ul = etree.SubElement(pd, 'ul')
-    ul.text = '\n                        '
-    ul.tail = '\n                    '
-    
-    # 处理每个列表项
-    for part in parts:
-        if part.startswith('- '):
-            print(f"处理列表项: {part}")
-            li = etree.SubElement(ul, 'li')
-            li.text = part[2:].strip()  # 移除 "- " 前缀
-            li.tail = '\n                        '
-    
-    # 调整最后一个 li 的缩进
-    if len(ul) > 0:
-        ul[-1].tail = '\n                    '
-    
-    # 打印生成的 XML
-    print("\n生成的 XML:")
-    print(etree.tostring(pd, encoding='unicode', pretty_print=True))
-    
-    return True, pd
 
 def update_parameters_section(parameters_section, platform_configs, dita_params):
     """更新参数部分"""
@@ -170,15 +111,8 @@ def update_parameters_section(parameters_section, platform_configs, dita_params)
         pt.tail = '\n                '
         
         # 添加通用描述
-        has_list, pd_content = process_parameter_description(param['desc'])
-        if has_list:
-            # 如果描述包含列表，直接添加处理好的 pd 元素
-            pd = pd_content
-            plentry.append(pd)
-        else:
-            # 如果是普通文本，创建简单的 pd 元素
-            pd = etree.SubElement(plentry, 'pd')
-            pd.text = pd_content
+        pd = etree.SubElement(plentry, 'pd')
+        pd.text = param['desc']
         pd.tail = '\n                '
         
         # 处理平台特定的描述
@@ -188,18 +122,10 @@ def update_parameters_section(parameters_section, platform_configs, dita_params)
                 platform_prop = get_platform_prop(p, platform_configs)
                 props = [platform_prop] if platform_prop else []
                 
-                # 处理平台特定描述中的列表
-                has_list, pd_content = process_parameter_description(desc)
-                if has_list:
-                    # 如果包含列表，使用处理好的 pd 元素
-                    pd = pd_content
-                    pd.set('props', ' '.join(props))
-                    plentry.append(pd)
-                else:
-                    # 如果是普通文本，创建简单的 pd 元素
-                    pd = etree.SubElement(plentry, 'pd')
-                    pd.text = pd_content
-                    pd.set('props', ' '.join(props))
+                # 创建平台特定的 pd
+                pd = etree.SubElement(plentry, 'pd')
+                pd.text = desc
+                pd.set('props', ' '.join(props))
                 pd.tail = '\n                '
         
         # 调整最后一个元素的缩进
@@ -223,7 +149,7 @@ def process_api_change(change_item, templates, platform_configs, new_file_path, 
     file_name = f"{prefix}_{change_item['parentclass']}_{change_item['key']}.dita".lower()
     full_file_path = os.path.join(new_file_path, file_name)
 
-    # 创建文件，如果文件已存在则返回
+    # 创建或更新文件
     if not create_dita_file(template_path, full_file_path):
         return
 
@@ -507,16 +433,16 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path,
         desc = change_item.get('description', {})
 
         # 更新 since 版本
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+        if 'detailed_desc' in desc:
             dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc'][0]:
-                dd.text = f"v{desc['detailed_desc'][0]['since']}"
+            if dd is not None and 'since' in desc['detailed_desc']:
+                dd.text = f"v{desc['detailed_desc']['since']}"
 
         # 更新描述
-        if 'detailed_desc' in desc and isinstance(desc['detailed_desc'], list) and desc['detailed_desc']:
+        if 'detailed_desc' in desc:
             p = detailed_desc_section.find('p')
-            if p is not None and 'desc' in desc['detailed_desc'][0]:
-                p.text = desc['detailed_desc'][0]['desc']
+            if p is not None and 'desc' in desc['detailed_desc']:
+                p.text = desc['detailed_desc']['desc']
 
     # 更新枚举值部分
     if 'enumerations' in change_item['description']:
@@ -1699,7 +1625,7 @@ def load_platform_keysmap(keysmap_file):
         return {}, {}
 
 def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
-    """将 dita 中的 markdown 代码格式转换为 dita 标签"""
+    """将 dita 中的 markdown 格式转换为 dita 标签"""
     # 按平台顺序加载所有 keysmap
     platform_keysmaps = []
     for config in platform_configs:
@@ -1715,7 +1641,113 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
     # 需要检查的标签
     tags_to_check = ['p', 'ph', 'pd', 'li']
     
-    # 第一步：处理 markdown 代码格式
+    def normalize_indent(spaces):
+        """将空格数标准化为缩进级别
+        0-1个空格 -> 0级
+        2-3个空格 -> 1级
+        4-5个空格 -> 2级
+        以此类推
+        """
+        return spaces // 2 if spaces > 0 else 0
+    
+    # 第一步：处理 markdown 列表
+    for tag in tags_to_check:
+        elements = root.findall(f'.//{tag}')
+        for element in elements:
+            if element.text:
+                # 获取完整的文本内容
+                full_text = element.text
+                
+                # 检查是否包含列表（以 "- " 开头的行）
+                if '- ' in full_text:
+                    # 保存原始的 tail
+                    original_tail = element.tail
+                    
+                    # 分割行
+                    lines = full_text.strip().split('\n')
+                    
+                    # 处理开头的非列表文本
+                    if not lines[0].lstrip().startswith('- '):
+                        element.text = lines[0].rstrip() + '\n                    '
+                        lines = lines[1:]
+                    else:
+                        element.text = None
+                    
+                    # 创建顶级 ul
+                    current_ul = etree.SubElement(element, 'ul')
+                    current_ul.text = '\n                        '
+                    
+                    # 用于跟踪列表层级
+                    ul_stack = [(0, current_ul)]  # (缩进级别, ul元素)
+                    current_li = None
+                    
+                    # 处理每一行
+                    for line in lines:
+                        if not line.strip():
+                            continue
+                        
+                        # 计算行首空格数并标准化为缩进级别
+                        leading_spaces = len(line) - len(line.lstrip())
+                        indent_level = normalize_indent(leading_spaces)
+                        stripped_line = line.lstrip()
+                        
+                        # 严格匹配列表项：必须以 "- " 开头
+                        if stripped_line.startswith('- ') and not stripped_line.startswith('- -'):
+                            content = stripped_line[2:]
+                            
+                            # 根据标准化的缩进级别确定层级
+                            while ul_stack and indent_level < ul_stack[-1][0]:
+                                ul_stack.pop()
+                            
+                            # 如果是新的缩进级别，创建新的嵌套列表
+                            if indent_level > ul_stack[-1][0]:
+                                if current_li is None:
+                                    # 如果没有当前列表项，创建一个
+                                    current_li = etree.SubElement(ul_stack[-1][1], 'li')
+                                    current_li.text = ''
+                                
+                                new_ul = etree.SubElement(current_li, 'ul')
+                                new_ul.text = '\n                                '
+                                ul_stack.append((indent_level, new_ul))
+                            
+                            # 创建列表项
+                            current_li = etree.SubElement(ul_stack[-1][1], 'li')
+                            current_li.text = content
+                            
+                            # 设置列表项的缩进
+                            depth = len(ul_stack) - 1
+                            base_indent = '                        '  # 基础缩进（24个空格）
+                            extra_indent = '    ' * depth  # 每层额外增加4个空格
+                            current_li.tail = '\n' + base_indent + extra_indent
+                        
+                        elif stripped_line and current_li is not None:
+                            # 继续当前列表项的内容
+                            if normalize_indent(leading_spaces) >= ul_stack[-1][0]:
+                                current_li.text += ' ' + stripped_line
+                    
+                    # 调整所有列表和列表项的缩进
+                    for ul in element.findall('.//ul'):
+                        depth = len(ul.xpath('ancestor::ul'))
+                        base_indent = '                        '  # 基础缩进（24个空格）
+                        extra_indent = '    ' * depth  # 每层额外增加4个空格
+                        
+                        # 设置 ul 的开始缩进
+                        ul.text = '\n' + base_indent + extra_indent
+                        
+                        # 处理 ul 中的每个 li
+                        for i, li in enumerate(ul):
+                            # 如果 li 有子 ul，需要在 li 结束标签前添加正确的缩进
+                            if li.find('ul') is not None:
+                                li.tail = '\n' + base_indent + extra_indent
+                            elif i < len(ul) - 1:  # 不是最后一个 li
+                                li.tail = '\n' + base_indent + extra_indent
+                            else:  # 最后一个 li
+                                li.tail = '\n' + base_indent + '    ' * (depth - 1) if depth > 0 else '\n                    '
+                    
+                    # 恢复原始的 tail
+                    element.tail = original_tail
+    
+    # 第二步：处理 markdown 代码格式
     for tag in tags_to_check:
         elements = root.findall(f'.//{tag}')
         for element in elements:
@@ -1762,7 +1794,7 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
                         else:
                             element.append(new_elem)
     
-    # 第二步：处理特殊关键字的 ph 元素
+    # 第三步：处理特殊关键字的 ph 元素
     special_keys = ['true', 'false', 'NULL']
     for ph in root.findall('.//ph'):
         if ph.get('keyref') in special_keys:
@@ -1786,6 +1818,48 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
                 
                 # 将 codeph 插入到原始位置
                 parent.insert(index, codeph)
+    
+    # 第三步：处理 markdown 列表
+    for tag in tags_to_check:
+        elements = root.findall(f'.//{tag}')
+        for element in elements:
+            if element.text:
+                # 使用正则表达式分割文本
+                parts = re.split(r'(?=- )', element.text.strip())
+                
+                # 检查是否包含列表
+                has_list = any(part.startswith('- ') for part in parts)
+                
+                if has_list:
+                    # 保存原始的 tail
+                    original_tail = element.tail
+                    
+                    # 清除原始文本
+                    element.text = None
+                    
+                    # 处理开头的普通文本
+                    if not parts[0].startswith('- '):
+                        element.text = parts[0].strip() + '\n                    '
+                        parts = parts[1:]
+                    
+                    # 创建 ul 元素
+                    ul = etree.SubElement(element, 'ul')
+                    ul.text = '\n                        '
+                    ul.tail = '\n                    ' if element.text else None
+                    
+                    # 处理每个列表项
+                    for part in parts:
+                        if part.startswith('- '):
+                            li = etree.SubElement(ul, 'li')
+                            li.text = part[2:].strip()
+                            li.tail = '\n                        '
+                    
+                    # 调整最后一个 li 的缩进
+                    if len(ul) > 0:
+                        ul[-1].tail = '\n                    '
+                    
+                    # 恢复原始的 tail
+                    element.tail = original_tail
 
 def main():
     # 定义模板文件路径
@@ -1809,13 +1883,12 @@ def main():
     json_file_path = 'data.json'
 
     try:
-        # 创建新的 DITA 文件
-        create_dita_files(json_file_path, templates, platform_configs, new_file_path, base_dir)
-
         process_all_ditamaps()
         parse_keysmaps()
         insert_relations(relations_path)
         insert_datatype(datatype_path)
+        # 创建新的 DITA 文件
+        create_dita_files(json_file_path, templates, platform_configs, new_file_path, base_dir)
         modify_dita_files()
 
         print("所有操作已完成")

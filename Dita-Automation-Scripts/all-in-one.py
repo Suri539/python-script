@@ -215,11 +215,34 @@ def process_api_change(change_item, templates, platform_configs, new_file_path, 
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
         
-        # 更新 since 版本
+        # 获取 detailed_desc 部分
         if 'detailed_desc' in desc:
-            dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc']:
-                dd.text = f"v{desc['detailed_desc']['since']}"
+            detailed_desc = desc['detailed_desc']
+            dl = detailed_desc_section.find('.//dl')
+            
+            if dl is not None:
+                # 检查是否有废弃信息
+                if 'deprecated' in detailed_desc and detailed_desc['deprecated']:
+                    # 更新为废弃信息
+                    dl.set('outputclass', 'deprecated')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '弃用：'
+                    dd = dl.find('.//dd')
+                    if dd is not None:
+                        # 清除现有内容
+                        for child in dd:
+                            dd.remove(child)
+                        dd.text = detailed_desc['deprecated']
+                else:
+                    # 更新 since 版本
+                    dl.set('outputclass', 'since')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '自从：'
+                    dd = dl.find('.//dd')
+                    if dd is not None and 'since' in detailed_desc:
+                        dd.text = f"{detailed_desc['since']}"
         
         # 更新通用描述
         if 'detailed_desc' in desc:
@@ -431,18 +454,42 @@ def process_enum_change(change_item, templates, platform_configs, new_file_path,
     detailed_desc_section = root.find('.//section[@id="detailed_desc"]')
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
-
-        # 更新 since 版本
+        
+        # 获取 detailed_desc 部分
         if 'detailed_desc' in desc:
-            dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc']:
-                dd.text = f"v{desc['detailed_desc']['since']}"
-
-        # 更新描述
+            detailed_desc = desc['detailed_desc']
+            dl = detailed_desc_section.find('.//dl')
+            
+            if dl is not None:
+                # 检查是否有废弃信息
+                if 'deprecated' in detailed_desc and detailed_desc['deprecated']:
+                    # 更新为废弃信息
+                    dl.set('outputclass', 'deprecated')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '弃用：'
+                    dd = dl.find('.//dd')
+                    if dd is not None:
+                        # 清除现有内容
+                        for child in dd:
+                            dd.remove(child)
+                        dd.text = detailed_desc['deprecated']
+                else:
+                    # 更新 since 版本
+                    dl.set('outputclass', 'since')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '自从：'
+                    dd = dl.find('.//dd')
+                    if dd is not None and 'since' in detailed_desc:
+                        dd.text = f"{detailed_desc['since']}"
+        
+        # 更新通用描述
         if 'detailed_desc' in desc:
             p = detailed_desc_section.find('p')
             if p is not None and 'desc' in desc['detailed_desc']:
                 p.text = desc['detailed_desc']['desc']
+                p.tail = '\n            '
 
     # 更新枚举值部分
     if 'enumerations' in change_item['description']:
@@ -618,11 +665,34 @@ def process_class_change(change_item, templates, platform_configs, new_file_path
     if detailed_desc_section is not None:
         desc = change_item.get('description', {})
         
-        # 更新 since 版本
+        # 获取 detailed_desc 部分
         if 'detailed_desc' in desc:
-            dd = detailed_desc_section.find('.//dlentry/dd')
-            if dd is not None and 'since' in desc['detailed_desc']:
-                dd.text = f"v{desc['detailed_desc']['since']}"
+            detailed_desc = desc['detailed_desc']
+            dl = detailed_desc_section.find('.//dl')
+            
+            if dl is not None:
+                # 检查是否有废弃信息
+                if 'deprecated' in detailed_desc and detailed_desc['deprecated']:
+                    # 更新为废弃信息
+                    dl.set('outputclass', 'deprecated')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '弃用：'
+                    dd = dl.find('.//dd')
+                    if dd is not None:
+                        # 清除现有内容
+                        for child in dd:
+                            dd.remove(child)
+                        dd.text = detailed_desc['deprecated']
+                else:
+                    # 更新 since 版本
+                    dl.set('outputclass', 'since')
+                    dt = dl.find('.//dt')
+                    if dt is not None:
+                        dt.text = '自从：'
+                    dd = dl.find('.//dd')
+                    if dd is not None and 'since' in detailed_desc:
+                        dd.text = f"{detailed_desc['since']}"
         
         # 更新通用描述
         if 'detailed_desc' in desc:

@@ -1709,7 +1709,7 @@ def convert_markdown_code_to_dita_tags(root, base_dir, platform_configs):
             })
     
     # 需要检查的标签
-    tags_to_check = ['p', 'ph', 'pd', 'li']
+    tags_to_check = ['p', 'ph', 'pd', 'li', 'dd']
     
     def normalize_indent(spaces):
         """将空格数标准化为缩进级别

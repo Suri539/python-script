@@ -1,0 +1,83 @@
+请按照下列步骤把英文翻译成中文，并按照提供的 json 模板呈现翻译后的信息。
+1. 翻译：把 diff{{#sys.query#}}翻译成中文。仅处理 diff 中的有增加和删除的部分，对应 "+"和 "-" 开头的内容。
+注意：仅处理{{#sys.query#}}中"+"和"-"的开头的信息并翻译成中文填入到相应的字段中，如果api注释没有"+"和"-"，则 parameters 字段均留空。
+2. 匹配术语：对于在 {{#context#}} 中找到的任何英文术语，必须使用知识库中对应的中文术语翻译，禁止自行翻译。生成多次译文的情况下也需要使用对应的中文翻译。
+### 示例
+- Channel profile 在知识库中对应的中文翻译是 ”频道场景“，输出的中文译文里必须使用 ”频道场景“。
+3. 格式化输出：按照提供的 json 数据模板呈现翻译后的信息。输出的 json 信息里面中文需要有句号，中文内的英文前后需要加空格，英文的首字母需要大写。
+### json 模板
+{
+    "api_name": "",
+    "api_signature": "",
+    "change_type": "create|delete|modify",
+    "change_desc": "变更的总结",
+    "shortdesc": "",
+    "detailed_desc": {
+        "since": "",
+        "desc": "",
+        "deprecated":"",
+        "note": "",
+    },
+    "related":"",
+    "platforms": "ios|android|mac|windows",
+    "parent_class": "",
+    "parameters": [
+        {
+            "name": "",
+            "type": "",
+            "desc": "",
+            "change_type": "create|delete|modify",
+            "old_value": "",
+            "new_value": "",
+            "is_output": ,
+             "is_array":
+        }
+    ],
+    "scenarios": "",
+    "timing": "",
+    "return_value": "",
+    "old_api_name": "",
+    "old_api_signature": ""
+}
+###
+注意:
+1. 如果 API 注释里面有 @technical preview，则无需翻译，保留原有英文即可。
+1. api_name 是这个 api 的名称，必填
+2. api_signature 是这个 api 的完整签名。
+3. change_type 指的是diff变更的类型，只有 create、modify、delete 三种。仅当 {{#sys.query#}}里面"+ 或 "-的改动涉及api签名时，change_type 为 create；仅涉及注释而非api签名时，为modify。"-对应删除 delete。注意：
+   - 在 change_type 是 create 时，只需填写 api_signature。
+   - 在 diff{{#sys.query#}}的改动修改了api签名时，填写 old_api_name、old_value、old_api_signature。
+   - 在 change_type 是 delete 时， 只需填写 api_name。
+4. change_desc 指的是变更的总结。
+注意：如果原文里面的 @technical preview 被删除（对应 "- *@technical preview"），则需要在 change_desc 里面补充一句：“删除了 @technical preview”。
+5. shortdesc 为必填项，表示这个 api 的功能简述。如果这个 api 是一个回调，则表示这个回调的功能简述。
+6. desc是这个 api 的详细描述，仅描述api本身实现的功能和使用方法，如果这个api是方法，不要参杂跟回调相关的描述。注意：请基于注释抓取这个信息。如果注释原文中没有这个信息，则留空，否则你会受到惩罚
+7. since 为这个 api 被增加时的版本信息，例如 "v4.5.0"。如果 @ since 有明确具体的版本，按照下列示例来描述：
+### 示例
+"since": "自 vx.x.x 版本新增。"
+注意：如果原文没有这个信息，则留空。
+8. deprecated 为这个 api 被废弃的版本信息，例如 "v4.5.0"。如果原文有这个信息，需要按照下列句式来描述：“该 API 自 vx.x.x 版本废弃，请改用 xxx。”注意：如果原文没有这个信息，则留空。
+9. note 表示这个 api 使用的注意事项，对应原文注释中@note的内容，如果原文没有@note这个信息，则留空。
+10. related 表示调用该方法后会触发的回调，对应{{#sys.query#}}中@seealso的完整信息，不要删减。请按照下列示例来描述。注意：如果原文没有这个信息，则留空。
+### 示例
+成功调用该方法后，SDK 会触发 xxx 回调报告 xxx。xxxx
+###
+11. platforms 为必填项，表示这个 api 支持的平台， C++ 语言对应 windows。
+12. parent_class 是这个 api 的父类。
+13. parameters 表示这个 api 的参数，name 是参数名，type 是参数的类型，结合api_signature来判断，desc是参数描述。当 parameters 里面的 change_type 是 modify 时，old_value 仅填写修改前的参数名，new_value 仅填写修改后的参数名。如果参数名没有任何变更（old_value 和 new_value 相同），则old_value和new_value 两个字段均留空，不要填写其他信息的变更。
+14. 对于{{#sys.query#}}中修改，如果涉及参数名称、参数注释、参数类型的修改，则 parameters 中参数的 change_type为modify，parameters里的desc仅填写修改后的最终描述，无需添加修改前的描述；如果整个参数为新增，则change_type为create，如果参数被删除，change_type为delete。
+15. is_output 表示这个参数是输出参数，bool型。需要结合 struct_signature 里面的代码原型和参数注释来判断，如果某个参数是输出参数，且非const指针，is_output 为 true，否则为 false。
+16. is_array 表示这个参数是数组，bool型。需要结合 struct_signature 里面的代码原型和参数注释来判断，如果某个参数是指针且为数组，is_array 为 true，否则为false。
+17. scenarios 是这个 api 的使用场景。注意：如果原文没有这个内容，则留空。仅当一个 API 的 parent_class 是 "IRtcEngineEx" 时，才需要在 scenarios 里面加一句描述：“该方法适用于多频道场景。”
+18. timing 是这个 api 的调用时机。如果这个 api 是方法，则表示该方法的调用时序。如果这个 api 是回调，timing 表示回调的触发时机。对应原文注释中@post的内容。注意：如果原文没有这个内容，则留空。
+19. restriction 是这个 api 的调用限制。注意：如果原文没有这个内容，则留空。
+20. 如果 diff {{#sys.query#}}里面的 API 被宏包含，则需要在 restrictions 里面增加平台限制，例如：“该方法仅适用于 iOS 平台。”
+21. return_value 表示这个 api 的返回值。如果原文没有这个内容，则留空。
+22. 各 json 字段里面的信息禁止重复描述，否则你会受到惩罚
+23. 如果描述里面有链接，需要保留链接
+24. 对于 diff 中 presence、lock、topic、storage 这四个单词，不做翻译处理，保留英文（首字母大写），以下为示例：
+###
+- lock event 翻译为 "Lock 事件"
+- presence instance 翻译为 "Presence 实例"
+- channel storage event 翻译为 "频道 Storage 事件"
+- topic event type 翻译为"Topic 事件类型"

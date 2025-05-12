@@ -1,0 +1,70 @@
+请按照下列步骤把英文翻译成中文，并按照提供的 json 模板呈现翻译后的信息。
+1. 翻译：把 diff{{#sys.query#}}翻译成中文。仅处理 diff 中的有增加和删除的部分，对应 "+" 和 "-" 开头的内容
+注意：如果参数原型和参数注释没有增删改（对应以"+"或"-"开头），则parameters的desc为空。
+2. 匹配术语：对于在 {{#context#}} 中找到的任何英文术语，必须使用知识库中对应的中文术语翻译，禁止自行翻译。生成多次译文的情况下也需要使用对应的中文翻译。
+### 示例
+- Channel profile 在知识库中对应的中文翻译是 ”频道场景“，输出的中文译文里必须使用 ”频道场景“。
+3. 格式化输出：按照提供的 json 数据模板呈现翻译后的信息。输出的 json 信息里面中文需要有句号，中文内的英文前后需要加空格，英文的首字母需要大写。
+### json 模板
+{
+    "struct_name": "",
+    "struct_signature":""
+    "change_type": "create|delete|modify",
+    "change_desc": "变更的总结",
+    "shortdesc": "",
+    "detailed_desc": {
+        "since": "",
+        "desc": "",
+         "deprecated": "",
+         "note":""
+    },
+    "platforms": "ios|android|mac|windows",
+    "parameters": [
+        {
+            "name": "",
+            "type": "",
+            "desc": "",
+            "is_public":,
+            "change_type": "create|delete|modify",
+             "note":"",
+            "old_value": "",
+            "new_value": "",
+             "is_output":,
+             "is_array":
+        }
+    ],
+    "old_struct_name": "",
+    "old_struct_signature":""
+}
+###
+注意:
+1. struct_name 是这个 struct 或 class 的名称，必填
+2. struct_signature 表示一个类或者结构体的完整原型，请注意，只保留类或结构体的定义和成员变量，删除所有注释部分并对代码格式按照c++语言的规范进行format。换行用 \n 表示，不要添加不属于这个类的代码。
+3. change_type 指的是diff变更的类型，只有 create、modify、delete 三种。其中 {{#sys.query#}}里面"+ 或 "- 的改动涉及api原型时，change_type 为 create；仅涉及注释时，为modify。"-对应删除 delete。注意：
+   - 在 change_type 是 create 时，只需填写 struct_signature。
+   - 在 change_type 是 modify 且{{#sys.query#}}的改动修改了api原型时，填写 old_struct_name、old_value、old_struct_signature。
+   - 在 change_type 是 delete 时， 只需填写 struct_name。
+4. change_desc 指的是变更的总结，包括参数变更的总结，需要阐述变更前后的信息。
+注意：如果原文里面的 @technical preview 被删除（对应 "- *@technical preview"），则需要在 change_desc 里面补充一句：“删除了 @technical preview”。
+5. shortdesc 为必填项，表示这个 struct 或 class 的功能简述。
+6. detailed_desc 是这个 struct 或 class 的详细描述。注意：请基于注释抓取这个信息。如果注释原文中没有这个信息，则留空，否则你会受到惩罚
+7. since 为这个 struct 或 class 被增加时的版本信息，例如 "v4.5.0"。如果 @ since 有明确具体的版本，按照下列示例来描述：
+### 示例
+"since": "自 vx.x.x 版本新增。"
+注意：如果原文没有这个信息，则留空。
+8. deprecated 为这个struct或class被废弃的版本信息，例如 "v4.5.0"。如果原文有这个信息，需要按照下列句式来描述：“该 API 自 vx.x.x 版本废弃，请改用 xxx。”注意：如果原文没有这个信息，则留空。
+8. note 表示整个 struct 或 class 使用的注意事项，对应原文注释中@note的内容，parameters里面的note表示某个参数使用的注意事项，如果原文没有@note这个信息，则留空。
+9. platforms 为必填项，表示这个 struct 或 class支持的平台， C++ 语言对应 windows。
+10. parameters 表示这个 struct 或 class 的参数，name 是参数名，desc是参数的完整描述，type 是参数的类型，结合struct_signature来判断。当 parameters 里面的 change_type 是 modify 时，old_value 仅填写修改前的参数名，new_value 仅填写修改后的参数名。如果参数名没有任何变更（old_value 和 new_value 相同），则old_value和new_value 两个字段均留空，不要填写其他信息的变更。
+10. 对于{{#sys.query#}}中修改，如果涉及参数名称、参数注释、参数类型的修改，则 parameters 中参数的 change_type为modify，parameters里的desc仅填写修改后的最终描述，无需添加修改前的描述；如果整个参数为新增，则change_type为create，如果参数被删除，change_type为delete。
+10. is_public 为 bool 型，表示某个参数是否可以对外。如果{{#sys.query#}}里面参数的注释有@technical preview，则该参数为false，否则，该字段为true
+11. is_output 表示这个参数是输出参数，bool型。需要结合 struct_signature 里面的代码原型和参数注释来判断，如果某个参数是输出参数，且非const指针，is_output 为 true，否则为 false。
+12. is_array 表示这个参数是数组，bool型。需要结合 struct_signature 里面的代码原型和参数注释来判断，如果某个参数是指针且为数组，is_array 为 true，否则为false。
+13. 如果 diff {{#sys.query#}}里面的 struct 或 class 被宏包含，则需要在 restrictions 里面增加平台限制，例如：“仅适用于 iOS 平台。”
+14. 各个字段的信息不要重复。
+15. 对于 diff 中 presence、lock、topic、storage 这四个单词，不做翻译处理，保留英文（首字母大写），以下为示例：
+###
+- lock event 翻译为 "Lock 事件"
+- presence instance 翻译为 "Presence 实例"
+- channel storage event 翻译为 "频道 Storage 事件"
+- topic event type 翻译为"Topic 事件类型"
